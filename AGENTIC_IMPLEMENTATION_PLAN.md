@@ -21,6 +21,8 @@ Authoritative docs:
    - Open one PR per repo from `roadmap/soul` → `main` early, and keep updating it as milestones land (single rolling PR).
 4. **No edits to `reference/` directories.**
    - `reference/*` is read-only context.
+5. **Do not track `external/` directories.**
+   - `external/*` are clones of external repositories where work for this effort can be done by a dedicated agent launched from the relevant repository.   
 
 ## AWS profiles (do not mix)
 
@@ -39,7 +41,7 @@ Authoritative docs:
 
 ## Repo boundaries (assignment map)
 
-Implementers must be assigned to **exactly one repo** per session:
+Implementers must be assigned to **exactly one repo** per session (repos other than lesser-soul are accessed in untracked external directory):
 
 - `lesser-soul` (this repo): phases 0–2 core implementation; Soul pack tooling/infra (if housed here).
 - `lesser` repo: CloudFront `/soul/*` behavior wiring into the instance distribution; any instance-side routing/auth integration needed in the Lesser stack.
