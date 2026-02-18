@@ -1,4 +1,4 @@
-# agentic-soul — Roadmap
+# lesser-soul — Roadmap
 
 This roadmap translates `SPEC.md` into an actionable delivery plan with milestones and acceptance criteria.
 
@@ -26,6 +26,22 @@ Assumptions:
 - **Phase 2:** full agent pool, multi-subtask DAG, memory curation, BRIDGE tools, token refresh.
 - **Phase 3:** central-account provisioning support in `lesser-host` (automated `soul up` + `soul bootstrap`).
 - **Phase 4:** commercial hardening (tiers, moderation, attestations, observability, runbooks).
+
+## Decisions (locked)
+
+- **Ingress:** `/soul/*` is served via the instance CloudFront distribution (not a direct Function URL). CloudFront caching is disabled for `/soul/*`, and it forwards `Authorization` + query strings to the orchestrator origin (Lambda Function URL). Direct Function URL access is allowed but must enforce Lesser OAuth bearer auth.
+- **Progress streaming:** implement SSE via AppTheory (`/soul/tasks/{id}/stream`), with `GET /soul/tasks/{id}` as the guaranteed fallback path.
+- **Agent verification:** `soul bootstrap` supports `--auto-verify-agents`; default enabled for `lab`, default disabled for `live` unless explicitly opted in.
+- **Delegation tokens:** Phase 1 logs `expiresIn` and fails loud on expiry. Phase 2 ships scheduled token refresh + alarms; optional “refresh-on-401” can be added later.
+- **Idempotency:** SubTask execution is at-least-once; side effects are at-most-once (DynamoDB conditional updates), including budget debit (at-most-once per SubTask).
+- **BRIDGE egress:** Phase 2 allows public internet with deny rules for private/metadata ranges; blocks redirects to private ranges; enforces hard timeouts and response size limits. Tighten to allowlists later if needed.
+- **Cloud inference contract:** cloud providers must return `usage`. Missing/unparseable `usage` is a fatal provider failure and marks the SubTask FAILED (completion may be logged for debugging but is not a successful result). Enforced in code plus an allowlist of approved endpoints. Local CLI inference may run without usage/no debit.
+- **Soul pack supply chain:** distribute a pinned, signed pack via a dedicated per-stage S3 bucket + KMS `SIGN/VERIFY` (GovTheory pattern). The provision runner verifies the KMS signature (RSASSA_PSS_SHA_256) before consuming any artifact. Packs are discovered via SSM stage pointers under `/soul/<stage>/...`.
+
+## Risks & mitigations
+
+- **SSE through CloudFront:** streaming can buffer/time out depending on behaviors and origin; mitigate by validating early and relying on the polling fallback.
+- **BRIDGE SSRF/DNS tricks:** “deny RFC1918” is necessary but not sufficient; mitigate with redirect checks, DNS resolution safeguards, and (where possible) network-layer egress constraints + tests.
 
 ---
 
@@ -73,13 +89,18 @@ Deliverables:
 - CDK stack creating:
   - `soul-<stage>` DynamoDB table (TableTheory schema backing)
   - SQS queues: at minimum `soul-researcher` + `soul-results`
-  - orchestrator Lambda (HTTP) + agent-runner Lambda (SQS)
+  - orchestrator Lambda (HTTP, Lambda Function URL) + agent-runner Lambda (SQS)
+  - `/soul/*` path behavior added to the existing Lesser CloudFront distribution, routing to the orchestrator Lambda Function URL
 - Basic IAM least-privilege policies for Lambda ↔ DynamoDB/SQS/SSM.
 
 Acceptance criteria:
 - [ ] `cdk deploy` (stage `lab`) completes successfully in the instance account.
 - [ ] DynamoDB table exists with expected name and tags (stage + instance domain).
 - [ ] SQS queues exist and Lambda event source mapping is enabled for agent-runner.
+- [ ] `POST https://<instance-domain>/soul/tasks` is reachable through CloudFront (not a direct Lambda URL).
+- [ ] CloudFront `/soul/*` behavior forwards auth (`Authorization`) to the orchestrator origin (no auth header stripping).
+- [ ] CloudFront `/soul/*` behavior forwards query strings (no loss of `?task_id=...` / pagination parameters, etc.).
+- [ ] CloudFront does not cache `/soul/*` responses (use a “caching disabled” policy) to prevent cross-user leakage.
 
 ### Milestone 1.2 — Lesser client + inference client (instance runtime)
 
@@ -98,15 +119,18 @@ Deliverables:
 Acceptance criteria:
 - [ ] In a deployed Lambda, cold-start loads inference URL/key from SSM (no secrets in env vars).
 - [ ] Unit tests cover request/response marshaling for Lesser GraphQL and inference requests.
+- [ ] Cloud inference responses without `usage` fail closed with a clear error (provider considered non-compliant).
 
 ### Milestone 1.3 — Orchestrator: POST task → enqueue 1 RESEARCHER subtask
 
 **Account:** Instance (profile `Sim`)
 
+> **Simplification:** Phase 1 does not use the LLM planner. The orchestrator hardcodes a single RESEARCHER subtask for every task. The planner LLM call and multi-subtask DAG are introduced in Phase 2 (M2.2).
+
 Deliverables:
 - `POST /soul/tasks`:
   - accepts `{ "goal": "..." }`
-  - creates a `Task` + a single `SubTask` (RESEARCHER)
+  - creates a `Task` + a single hardcoded `SubTask` (RESEARCHER, no planning step)
   - enqueues SQS message to the RESEARCHER queue
 - `soul-results` handler:
   - updates `SubTask` and `Task` status on completion
@@ -136,22 +160,29 @@ Acceptance criteria:
 - [ ] `RunLog` entries exist for LLM call + Note post + result publish (with truncation rules).
 - [ ] The orchestrator observes completion via `soul-results` and marks the Task `DONE`.
 
-### Milestone 1.5 — Bootstrap: register agent + delegate token → SSM
+### Milestone 1.5 — Bootstrap: register agent + verify + delegate token → SSM
 
 **Account:** Instance (profile `Sim`)
 
+> **Quarantine note:** Lesser places newly registered agents in quarantine. An agent in quarantine cannot post Notes, which means the Phase 1 exit criterion cannot be met until quarantine is lifted. `adminVerifyAgent` must be called (via the Simulacrum `/admin/agents` UI or directly via GraphQL) as an explicit step in the bootstrap sequence.
+>
+> **Token TTL:** `delegateToAgent` returns an `expiresIn` value. Confirm the token lifetime is long enough to cover the Phase 1 test window before relying on it in `lab`. The token-refresher (M2.5) does not exist yet in Phase 1 — if `expiresIn` is shorter than the test window, manually re-run bootstrap to obtain a fresh token rather than leaving the Lambda broken silently.
+
 Deliverables:
 - Bootstrap script/command that:
-  - registers `soul-researcher` in Lesser
+  - registers `soul-researcher` in Lesser via `registerAgent`
+  - calls `adminVerifyAgent` (or documents the required manual step with exact GraphQL mutation) to lift quarantine
   - obtains delegation token (`delegateToAgent`)
   - stores access/refresh tokens in SSM under `/soul/<domain>/agents/researcher/{token,refresh}`
+  - logs `expiresIn` so the operator knows when re-bootstrap is needed before M2.5 is live
 
 Acceptance criteria:
 - [ ] After bootstrap, SSM contains `SecureString` parameters at the expected paths.
-- [ ] A fresh Lambda deployment can read the token from SSM and successfully post a Note.
+- [ ] `soul-researcher` is verified (not in quarantine) in Lesser — confirmed via `agent(username: "soul-researcher") { verified }` query.
+- [ ] A fresh Lambda deployment can read the token from SSM and successfully post a Note attributed to `soul-researcher`.
 
 **Phase 1 exit criteria:**
-- [ ] POST a research goal; receive a Lesser Note URL containing the synthesized result.
+- [ ] POST a research goal; receive a Lesser Note URL containing the synthesized result, attributed to `soul-researcher`.
 
 ---
 
@@ -211,13 +242,14 @@ Deliverables:
 - `cmd/tool-executor` Lambda consuming `soul-bridge` queue.
 - Implement tools from `SPEC.md` with constraints:
   - `bash_exec` (timeout, memory cap)
-  - `http_request` (public IP allowlist / RFC1918 deny)
+  - `http_request` (public internet; deny private/metadata ranges; redirect-safe)
   - `file_read`/`file_write` (per-task scratch dir)
   - `lesser_search` (delegated `agentMemorySearch`)
 - RunLog logging + truncation + input hashing.
 
 Acceptance criteria:
 - [ ] Tool calls cannot access RFC1918 addresses (validated with test cases).
+- [ ] Redirects cannot be used to reach private/metadata ranges (e.g., AWS metadata), even if the initial URL is public.
 - [ ] Tool outputs are truncated to the configured maximum and logged with hashes.
 - [ ] Per-task scratch directories are isolated and cleaned up on completion (or TTL’d with scheduled cleanup).
 
@@ -236,14 +268,40 @@ Acceptance criteria:
 - [ ] Curator posts tagged fact Notes that subsequently appear in `agentMemorySearch` results for related queries.
 - [ ] Token refresh runs end-to-end without manual intervention for at least 7 consecutive days in `lab`.
 
+### Milestone 2.6 — lesser-host credit debit integration
+
+**Account:** Instance (profile `Sim`) → calls Central (`lesser-host` trust API)
+
+> **Why Phase 2, not Phase 4:** Basic credit debit (`POST /api/v1/budget/debit`) is a simple async call after each inference. Deferring it to Phase 4 means Phase 2 and 3 operate with unbilled usage. Wiring it here establishes the billing path early and keeps the commercial model honest from the start.
+>
+> Note: this is distinct from attestation (`POST /api/v1/ai/claims/verify`), which remains in Phase 4 (M4.1).
+
+Deliverables:
+- `pkg/lesserhost/` client with `DebitBudget(ctx, module, target string, credits int, cached bool) error`.
+- `lesserhost` middleware injecting the client into all agent-runner Lambdas.
+- After each inference call, fire `DebitBudget` asynchronously (goroutine) — failures are logged to `RunLog` but do not fail the task.
+- Debit is **at-most-once per SubTask**: protect against SQS redelivery/retries by guarding with a DynamoDB conditional update (e.g., only debit when `SubTask.CreditsDebitedAt` is unset) and/or a deterministic idempotency key if supported by the trust API.
+- Instance API key loaded from SSM: `/soul/<domain>/lesser-host/instance-key` (SecureString).
+- `AgentConfig` stores `CreditsPerKTokens` (default: `5`); credit calculation: `ceil(tokens_total / 1000.0 * CreditsPerKTokens)`.
+
+Acceptance criteria:
+- [ ] After a completed task, a `POST /api/v1/budget/debit` call is visible in lesser-host trust API logs for the instance.
+- [ ] A budget-exceeded response (HTTP 402) from lesser-host does not fail the task — the `SubTask` completes with `credits_debited: 0` and a `RunLog` entry records the budget event.
+- [ ] Reprocessing the same SubTask (simulated retry / duplicate SQS delivery) does not result in multiple debits for the same `<task_id>#<subtask_id>`.
+- [ ] No inference secrets or token values appear in debit request payloads or logs.
+
 **Phase 2 exit criteria:**
-- [ ] A goal requiring research → code → summary completes end-to-end, with memory retrieval contributing to each turn.
+- [ ] A goal requiring research → code → summary completes end-to-end, with memory retrieval contributing to each turn and inference credits debited to the instance budget.
 
 ---
 
 ## Phase 3 — lesser-host integration + automated provisioning
 
 Goal: enabling Soul at instance creation time, provisioned by `lesser-host` without manual steps.
+
+> **`agentActivity` subscription — clarification:** The SPEC describes a GraphQL `agentActivity` subscription. This is **not** the orchestrator's result notification path — SQS (`soul-results`) handles that reliably. The `agentActivity` subscription is a Lesser-native real-time stream intended for **UI consumers** (e.g., the Simulacrum `/agents` page showing live agent activity). It does not need to be implemented in any orchestrator Lambda. Phase 3 is the right time to expose it if Simulacrum UI integration is desired.
+>
+> **greater-components (vendored):** Any Simulacrum UI additions (agent activity feed, task dashboard) are built with `greater-components` — the same library Simulacrum already uses. The `agentActivity` subscription is consumed via the vendored Lesser GraphQL adapter + `TransportManager`. Lock the vendored version via the project’s `components.json` (`ref: greater-vX.Y.Z`). Near-term, plan for an internal registry to distribute CLI artifacts + a curated registry index for your systems.
 
 ### Milestone 3.1 — lesser-host data model + portal API surface (central)
 
@@ -276,8 +334,19 @@ Acceptance criteria:
 **Account:** Central (profile `Lesser`) for orchestration, Instance (profile `Sim`) for actual deploy
 
 Deliverables:
+- Soul pack publishing infra (GovTheory-style):
+  - dedicated per-stage S3 pack bucket (immutable/versioned artifacts)
+  - KMS asymmetric key (`SIGN/VERIFY`) for pack manifest signatures
+  - SSM discovery under `/soul/<stage>/...`: `packBucketName`, `signingKeyArn`, `packVersion`, (optional) `readerPolicyArn`, `publisherPolicyArn`
+- Pack publisher (CI job or scripted release) uploads an immutable pack version:
+  - `soul-pack-<version>.tgz`
+  - `soul-pack-<version>.manifest.json` (deterministic bytes; includes file list + sha256 digests; may embed pins)
+  - `soul-pack-<version>.manifest.sig` (KMS signature over `sha256(manifest.json)` using `RSASSA_PSS_SHA_256`)
+  - updates `/soul/<stage>/packVersion` stage pointer
 - CodeBuild project (or equivalent runner) that:
-  - fetches a pinned `agentic-soul` artifact/version
+  - resolves the pack version from `SOUL_VERSION` (override) or `/soul/<stage>/packVersion` (default)
+  - fetches the pinned `lesser-soul` pack from the pack bucket
+  - verifies the pack’s signed manifest via KMS `Verify` (fail closed on verify failure) before consuming
   - deploys CDK to the instance account
   - runs bootstrap
   - writes `soul-state.json` receipt to S3
@@ -286,6 +355,8 @@ Deliverables:
 Acceptance criteria:
 - [ ] A new instance provision produces a valid `soul-state.json` in the expected S3 prefix.
 - [ ] lesser-host can read and present receipt details in logs/portal without additional AWS permissions beyond least-privilege.
+- [ ] The runner fails closed if manifest verification fails (no deploy/bootstrapping occurs on unsigned or tampered packs).
+- [ ] Changing any file in the pack without updating the signed manifest causes verification failure (integrity is enforced).
 
 ### Milestone 3.4 — End-to-end integration test (managed instance)
 
@@ -374,4 +445,12 @@ Acceptance criteria:
 
 - Multi-tenant load testing (concurrent tasks across many instances).
 - Advanced planner improvements (tool-use planning, self-critique, budget-aware routing).
-- UI integration in Simulacrum (`/agents` + task dashboard) beyond the minimal API contract.
+- **Simulacrum task dashboard** (consider pulling into Phase 3 as a parallel track once M2 is stable):
+  Simulacrum already ships `/agents`, `/admin/agents`, agent delegation UI, and agent post filtering — the foundation is there. The remaining delta is a task history view and a `POST /soul/tasks` submission form. Built with `greater-components` (same library Simulacrum uses throughout):
+  - `StepIndicator` for task progress (PLANNING → RUNNING → DONE)
+  - `Timeline` / `TimelineVirtualized` for the agent activity feed (agent Notes render natively — no custom card needed)
+  - `StreamingText` for live inference output if SSE is piped to the browser
+  - `shared/admin` components for the task management and run-log views
+  - `Badge` for agent type labels; `Alert` for budget-exceeded and error states
+  - `agentActivity` subscription consumed via the vendored Lesser GraphQL adapter — lock to the git tag in Simulacrum’s `components.json`
+- **Internal Greater registry** (near-term): host CLI artifacts + a curated registry index/checksums for deterministic vendoring across your systems.

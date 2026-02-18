@@ -1,4 +1,4 @@
-# agentic-soul — Specification
+# lesser-soul — Specification
 
 **Version:** 0.1.0-draft
 **Status:** Draft
@@ -29,11 +29,17 @@
 18. [Implementation Phases](#18-implementation-phases)
 19. [Repository Structure](#19-repository-structure)
 
+**Appendices**
+- [Appendix A — Lesser agent GraphQL operations used](#appendix-a--lesser-agent-graphql-operations-used)
+- [Appendix B — lesser-host trust API endpoints used](#appendix-b--lesser-host-trust-api-endpoints-used)
+- [Appendix C — Key dependencies (go.mod)](#appendix-c--key-dependencies-gomod)
+- [Appendix D — Frontend: greater-components](#appendix-d--frontend-greater-components)
+
 ---
 
 ## 1. Overview
 
-`agentic-soul` is an agentic orchestration layer that runs **within a provisioned Lesser instance account** and uses the existing Lesser, lesser-host, AppTheory, and TableTheory stack as its infrastructure backbone.
+`lesser-soul` is an agentic orchestration layer that runs **within a provisioned Lesser instance account** and uses the existing Lesser, lesser-host, AppTheory, and TableTheory stack as its infrastructure backbone.
 
 It provides:
 
@@ -57,7 +63,7 @@ simulacrum         SvelteKit frontend for the Lesser instance. Has /agents and
                    /admin/agents routes, agent delegation UI, agent post
                    filtering. Designed for LLM bot communities.
 
-agentic-soul       THIS PROJECT. Deployed alongside lesser in the instance
+lesser-soul       THIS PROJECT. Deployed alongside lesser in the instance
 (this repo)        account. Orchestrates agents using Lesser's native APIs,
                    LM Studio (or configured inference endpoint), AppTheory
                    Lambdas, and a soul-table (TableTheory) for orchestration
@@ -66,7 +72,7 @@ agentic-soul       THIS PROJECT. Deployed alongside lesser in the instance
 
 ### Key constraint: Lesser already has agents
 
-Lesser's `graph/agents.graphql` provides a complete agent subsystem. `agentic-soul` consumes it rather than reimplementing it:
+Lesser's `graph/agents.graphql` provides a complete agent subsystem. `lesser-soul` consumes it rather than reimplementing it:
 
 | Capability | Lesser provides |
 |---|---|
@@ -77,7 +83,7 @@ Lesser's `graph/agents.graphql` provides a complete agent subsystem. `agentic-so
 | Rate limiting | `AgentCapabilities.maxPostsPerHour`, `requiresApproval` |
 | Admin governance | `adminVerifyAgent`, `adminSuspendAgent`, `updateAdminAgentPolicy` |
 
-`agentic-soul` adds the **reasoning loop**, **task routing**, and **tool execution** that Lesser intentionally does not include.
+`lesser-soul` adds the **reasoning loop**, **task routing**, and **tool execution** that Lesser intentionally does not include.
 
 ---
 
@@ -101,7 +107,7 @@ AWS Organizations (managed by lesser-host)
     │   │                            agentMemorySearch, agentActivity
     │   └── ActivityPub layer        inbox, outbox, federation, HTTP Signatures
     │
-    └── agentic-soul  (NEW)
+    └── lesser-soul  (NEW)
         ├── orchestrator Lambda      AppTheory — HTTP, SQS, EventBridge
         ├── agent-runner Lambda      AppTheory — SQS, type-dispatched
         ├── tool-executor Lambda     AppTheory — SQS, sandboxed BRIDGE ops
@@ -111,7 +117,7 @@ AWS Organizations (managed by lesser-host)
 
 ### Traffic model
 
-External clients interact with `agentic-soul` through the same CloudFront distribution as the Lesser instance. The orchestrator Lambda is exposed via a path-based behavior (`/soul/*`) added to the existing Lesser CDK stack's CloudFront configuration.
+External clients interact with `lesser-soul` through the same CloudFront distribution as the Lesser instance. The orchestrator Lambda is exposed via a path-based behavior (`/soul/*`) added to the existing Lesser CDK stack's CloudFront configuration.
 
 Agent-to-agent communication is internal to the instance account: SQS for task routing, Lesser GraphQL for memory and result posting. No external traffic crosses account boundaries during a task run.
 
@@ -120,10 +126,10 @@ Agent-to-agent communication is internal to the instance account: SQS for task r
 ## 3. Design Principles
 
 **1. Consume Lesser, don't duplicate it.**
-Agent identity, timelines, memory search, activity streaming, and HTTP Signatures already exist in Lesser. `agentic-soul` calls Lesser APIs and never reimplements them.
+Agent identity, timelines, memory search, activity streaming, and HTTP Signatures already exist in Lesser. `lesser-soul` calls Lesser APIs and never reimplements them.
 
 **2. Match lesser-host patterns exactly.**
-AppTheory for Lambda routing. TableTheory for DynamoDB. SSM Parameter Store for secrets. `theory app up/down` for deployment. Same CDK stage model (`lab`, `live`). This makes `agentic-soul` maintainable by anyone already familiar with the ecosystem.
+AppTheory for Lambda routing. TableTheory for DynamoDB. SSM Parameter Store for secrets. `theory app up/down` for deployment. Same CDK stage model (`lab`, `live`). This makes `lesser-soul` maintainable by anyone already familiar with the ecosystem.
 
 **3. The inference endpoint is a configuration, not a dependency.**
 The URL and key are read from SSM at cold start. Locally, this points to LM Studio. In production, it points to any OpenAI-compatible hosted endpoint. No agent code changes between environments.
@@ -138,7 +144,7 @@ The `soul-table` stores orchestration state (task status, routing, run logs). Th
 A single `agent-runner` Lambda handles all agent types, dispatched by the SQS queue name at runtime. This simplifies deployment and keeps the inference loop in one place.
 
 **7. Blast radius matches lesser-host's instance isolation model.**
-Each instance account runs its own `agentic-soul` stack. A runaway agent or misconfigured task cannot affect other tenants because there is no shared runtime.
+Each instance account runs its own `lesser-soul` stack. A runaway agent or misconfigured task cannot affect other tenants because there is no shared runtime.
 
 ---
 
@@ -167,7 +173,7 @@ CloudFront (Lesser instance distribution)
            │ SQS (per type)    │ Lesser GraphQL/REST
            │                   │ (registerAgent,
            │                   │  agentMemorySearch,
-           │                   │  agentActivity sub,
+           │                   │  agentActivity sub (UI),
            │                   │  post Note/Article)
 ┌──────────▼──────────┐  ┌────▼───────────────────────┐
 │  agent-runner Lambda │  │  lesser instance            │
@@ -178,7 +184,7 @@ CloudFront (Lesser instance distribution)
 │  soul-curator        │  │  • registerAgent            │
 │  soul-custom         │  │  • delegateToAgent          │
 │                      │  │  • agentMemorySearch        │
-│  per turn:           │  │  • agentActivity sub        │
+│  per turn:           │  │  • agentActivity sub (UI)   │
 │  1. fetch memory     │  │  • Notes as result posts    │
 │  2. build prompt     │  │                             │
 │  3. call inference   │  │  Timelines = episodic mem   │
@@ -228,9 +234,9 @@ SSM Parameter Store (instance account)
 
 ### 5.1 Agent types
 
-Lesser's `AgentType` enum maps to `agentic-soul` roles:
+Lesser's `AgentType` enum maps to `lesser-soul` roles:
 
-| Lesser AgentType | agentic-soul role | Description |
+| Lesser AgentType | lesser-soul role | Description |
 |---|---|---|
 | `ASSISTANT` | orchestrator-facing responder | Handles general task turns, interfaces with human operator |
 | `RESEARCHER` | researcher | Web research, document retrieval, fact synthesis |
@@ -261,7 +267,7 @@ Example input:
 {
   "username": "soul-researcher",
   "displayName": "Soul Researcher",
-  "bio": "Autonomous research agent — agentic-soul v0.1",
+  "bio": "Autonomous research agent — lesser-soul v0.1",
   "agentType": "RESEARCHER",
   "version": "0.1.0",
   "publicKey": "<rsa-2048-pub-pem>",
@@ -334,7 +340,8 @@ The `hybridRetrievalEnabled` flag in `AdminAgentPolicy` controls whether Lesser 
 
 ### 5.5 Result posting
 
-After inference, the agent posts its result as a Lesser Note using its delegation token. The Note's `metadataJson` field (set via the agent activity system) carries the `task_id` for orchestrator correlation.
+After inference, the agent posts its result as a Lesser Note using its delegation token. The Note's `url` (Lesser object ID) is stored in `soul-table.SubTask.LesserNoteID` for audit linkage.
+Optionally, the Note's `metadataJson` (via the agent activity system) can include `task_id`/`subtask_id` for UI correlation.
 
 ```graphql
 mutation CreateNote($input: CreateNoteInput!) {
@@ -347,11 +354,9 @@ mutation CreateNote($input: CreateNoteInput!) {
 }
 ```
 
-The Note's `url` (Lesser object ID) is stored in `soul-table.SubTask.LesserNoteID` for audit linkage.
+### 5.6 Activity subscription (UI / observability)
 
-### 5.6 Activity subscription
-
-The orchestrator subscribes to agent activity events at startup:
+Lesser exposes a real-time `agentActivity` subscription (GraphQL over `graphql-ws`). This is primarily consumed by UI surfaces (e.g., Simulacrum `/agents`) and optional operational dashboards to show live agent actions.
 
 ```graphql
 subscription AgentActivity($username: String!) {
@@ -366,9 +371,9 @@ subscription AgentActivity($username: String!) {
 }
 ```
 
-`metadataJson` contains `{"task_id": "TASK#...", "subtask_id": "SUB#...", "status": "completed"}`, which the orchestrator uses to route the result.
+The orchestrator does **not** rely on `agentActivity` for task completion. The durable result path is `soul-results` SQS, which carries the `task_id`/`subtask_id` and the posted Note ID/URL.
 
-The orchestrator maintains one subscription per registered agent type. Subscriptions use Lesser's `graphql-ws` endpoint over WebSocket.
+If emitted, `metadataJson` should include `{"task_id": "TASK#...", "subtask_id": "SUB#...", "status": "completed"}` so UIs can correlate activity events with orchestration state.
 
 ---
 
@@ -400,6 +405,8 @@ Credit calculation: `ceil(tokens_in + tokens_out) / 1000 * SOUL_CREDITS_PER_1K_T
 
 `SOUL_CREDITS_PER_1K_TOKENS` is a Lambda environment variable set at deploy time. Default: `5` credits per 1K tokens.
 
+**Idempotency:** credit debit must be **at-most-once per SubTask** (`<task-id>#<subtask-id>`). Because SQS/Lambda retries can duplicate inference execution, the agent-runner should guard debit with a conditional write in `soul-table` (e.g., set `credits_debited_at` only if unset) and/or a deterministic idempotency key if supported by the trust API.
+
 ### 6.2 Trust API — attestation of agent outputs
 
 For Standard and Pro instances, agent results can be attested via lesser-host's KMS-signed attestation system:
@@ -423,7 +430,7 @@ The `ProvisionJob` model in lesser-host gains two new fields:
 
 | Field | Type | Description |
 |---|---|---|
-| `soulEnabled` | bool | Whether agentic-soul should be deployed alongside lesser |
+| `soulEnabled` | bool | Whether lesser-soul should be deployed alongside lesser |
 | `soulProvisionedAt` | string (ISO8601) | Timestamp of successful soul-up completion |
 
 The `provision-worker` Lambda's state machine gains a new step after `lesser.deploy`:
@@ -436,7 +443,7 @@ new steps after lesser.init:
   soul.deploy → soul.init → register
 ```
 
-`soul.deploy` triggers a second CodeBuild run in the instance account using a new CodeBuild project (`lesser-host-<stage>-soul-provision-runner`). It downloads the `agentic-soul` release artifact from GitHub and runs `soul up`.
+`soul.deploy` triggers a second CodeBuild run in the instance account using a new CodeBuild project (`lesser-host-<stage>-soul-provision-runner`). It downloads a **pinned `lesser-soul` bundle** from the central artifact bucket (S3), verifies a **KMS-signed manifest** (GovTheory-style: `*.manifest.json` + `*.manifest.sig`), and only then runs `soul up`.
 
 `soul.init` calls `soul bootstrap` (a CLI command in `cmd/soul-cli`) which:
 1. Creates agent actors in Lesser via `registerAgent`
@@ -704,15 +711,15 @@ The debit call to lesser-host's trust API is made asynchronously (goroutine) to 
 
 ### Orchestrator (not a Lesser agent — internal to orchestrator Lambda)
 
-The orchestrator itself is not registered as a Lesser agent. It runs inside the orchestrator Lambda and uses a privileged Lesser OAuth token (admin-scoped) for reading timelines and monitoring agent activity subscriptions.
+The orchestrator itself is not registered as a Lesser agent. It runs inside the orchestrator Lambda and uses a privileged Lesser OAuth token (admin-scoped) for reading timelines and performing admin-scoped operations (e.g., aggregation fetches).
 
 **Responsibilities:**
 - Receive user task goals
 - Call LLM to produce a structured subtask plan (JSON, validated against a schema)
 - Write `Task` and `SubTask` records to soul-table
 - Route subtasks to the correct agent SQS queue
-- Monitor `agentActivity` subscriptions for result notifications
-- Aggregate subtask results via `soul-results` SQS
+- Receive subtask completions via `soul-results` SQS
+- Aggregate subtask results by fetching posted Notes from Lesser
 - Chain dependent subtasks when upstreams complete
 - Finalize and optionally attest the completed task
 
@@ -1049,7 +1056,7 @@ soul bootstrap \
 | Lambda functions | orchestrator, agent-runner (×N, one per queue), tool-executor, token-refresher |
 | EventBridge rules | `soul-memory-curator` (every 10 min), `soul-token-refresh` (daily) |
 | IAM roles | Least-privilege per Lambda: DynamoDB read/write, SQS send/receive, SSM read |
-| CloudFront behavior | `/soul/*` → orchestrator Lambda Function URL (added to existing Lesser distribution) |
+| CloudFront behavior | `/soul/*` → orchestrator Lambda Function URL (added to existing Lesser distribution; caching disabled; forwards `Authorization`) |
 
 ### lesser-host provision-worker extension
 
@@ -1112,7 +1119,7 @@ Soul credits share the instance's existing credit pool. The `SOUL_CREDITS_PER_1K
 
 The lesser-host portal gains a **Soul** section under each instance:
 
-- Enable/disable agentic-soul
+- Enable/disable lesser-soul
 - View agent registry (agent type, username, verified status, activity count)
 - View soul credit usage (broken down by agent type)
 - Configure per-agent model ID (overrides defaults)
@@ -1244,62 +1251,49 @@ theory app up --stage live
 
 ## 18. Implementation Phases
 
+This section is intentionally high-level. See `ROADMAP.md` for detailed milestones, sequencing, and acceptance criteria.
+
 ### Phase 1 — Core loop (MVP)
 
 **Goal:** A working end-to-end task with a single agent turn.
 
-- [ ] `infra/cdk/soul-stack.ts` — soul-table, SQS queues (researcher + results), orchestrator Lambda, agent-runner Lambda
-- [ ] `pkg/models/` — `Task`, `SubTask`, `AgentConfig`, `RunLog` TableTheory structs
-- [ ] `pkg/inference/` — OpenAI-compat client, SSM-backed URL + key loading
-- [ ] `pkg/lesser/` — GraphQL client: `agentMemorySearch`, `createNote`, `agentActivity` subscription
-- [ ] `cmd/orchestrator/` — `POST /soul/tasks`, single-subtask decomposition, SQS enqueue, `soul-results` handler
-- [ ] `cmd/agent-runner/` — RESEARCHER type: memory fetch, prompt build, inference, Note post, SQS result publish
-- [ ] `scripts/register-agents.go` — bootstrap: `registerAgent` + `delegateToAgent` for RESEARCHER
-- [ ] Manual deployment to dev.simulacrum.greater.website (lab stage)
+- Instance account deployment (CDK): soul-table, SQS queues, Lambdas, and `/soul/*` CloudFront routing to the orchestrator.
+- Orchestrator API: `POST /soul/tasks` creates a Task + a single hardcoded RESEARCHER SubTask (planner introduced in Phase 2).
+- Agent-runner (RESEARCHER): memory fetch → inference → post Note to Lesser → publish completion to `soul-results`.
+- Bootstrap (RESEARCHER): register agent, lift quarantine (verify), and store delegation tokens in SSM.
 
 **Exit criteria:** POST a research goal, receive a Lesser Note URL containing the synthesized result.
 
-### Phase 2 — Full agent pool + memory
+### Phase 2 — Full agent pool + memory + tools
 
 **Goal:** All agent types running, memory system active.
 
-- [ ] `cmd/agent-runner/` — add ASSISTANT, CURATOR, CUSTOM (coder, summarizer)
-- [ ] `cmd/tool-executor/` — BRIDGE agent with `bash_exec` and `http_request`
-- [ ] `cmd/token-refresher/` — daily token refresh EventBridge Lambda
-- [ ] Orchestrator: multi-subtask DAG planning and dependency chaining
-- [ ] Orchestrator: `GET /soul/tasks/{id}` status endpoint
-- [ ] Orchestrator: SSE streaming endpoint (Lambda Function URL)
-- [ ] Memory curation: CURATOR EventBridge rule + agent turn
-- [ ] `scripts/register-agents.go` — all agent types
-- [ ] lesser-host credit debit integration (async goroutine)
+- Orchestrator planner produces a schema-validated multi-subtask DAG and chains dependencies.
+- Agent pool expansion: ASSISTANT, CURATOR, CUSTOM variants; BRIDGE tool-executor for sandboxed ops.
+- Memory system: CURATOR scheduled runs and durable curated memory that improves `agentMemorySearch` results.
+- Token refresh: scheduled refresher keeps delegation tokens valid without manual intervention.
+- Billing path: debit instance credits per inference call via lesser-host trust API, with at-most-once semantics per SubTask.
+- UX contract: status endpoint + streaming progress (SSE or documented fallback).
 
 **Exit criteria:** A goal requiring research → code → summary completes end-to-end with memory retrieval contributing to each turn.
 
 ### Phase 3 — lesser-host integration + provisioning
 
-**Goal:** `agentic-soul` is provisioned automatically by lesser-host as part of managed instance creation.
+**Goal:** `lesser-soul` is provisioned automatically by lesser-host as part of managed instance creation.
 
-- [ ] lesser-host `ProvisionJob` model: `soulEnabled`, `soulProvisionedAt` fields
-- [ ] lesser-host provision-worker: `soul.deploy` and `soul.init` state machine steps
-- [ ] CodeBuild project: `lesser-host-<stage>-soul-provision-runner`
-- [ ] `cmd/soul-cli/` — `soul up` and `soul bootstrap` CLI commands
-- [ ] lesser-host portal: Soul section (enable/disable, agent registry, credit usage)
-- [ ] S3 soul receipt: `soul-state.json` written and ingested by provision-worker
-- [ ] Integration test: full provision → soul bootstrap → task execution
+- Central account integration (lesser-host): instance model fields + portal/API exposure for enabling Soul.
+- Provision-worker workflow adds `soul.deploy` + `soul.init` steps, running `soul up` and `soul bootstrap` in the instance account.
+- CodeBuild runner deploys a pinned `lesser-soul` version and writes an S3 receipt (`soul-state.json`) for audit and portal display.
 
-**Exit criteria:** Creating a new managed instance via lesser-host portal with `soul_enabled: true` results in a fully bootstrapped `agentic-soul` stack without manual intervention.
+**Exit criteria:** Creating a new managed instance via lesser-host portal with `soul_enabled: true` results in a fully bootstrapped `lesser-soul` stack without manual intervention.
 
 ### Phase 4 — Commercial hardening
 
 **Goal:** Production-ready, commercially viable.
 
-- [ ] Attestation integration: `POST /api/v1/ai/claims/verify` on task completion (Standard/Pro)
-- [ ] MODERATOR agent: output filtering before result return (Pro)
-- [ ] Tier enforcement: disable BRIDGE and MODERATOR on Starter instances via `AgentConfig.Enabled`
-- [ ] Cost dashboard: soul credit breakdown in lesser-host portal by agent type
-- [ ] Rate limiting: respect `AgentCapabilities.maxPostsPerHour` from Lesser
-- [ ] Observability: CloudWatch EMF metrics (task latency, token counts, credit spend, error rate)
-- [ ] Runbook: operational procedures for stuck tasks, token refresh failures, DLQ handling
+- Tier enforcement, safety surfaces, and optional attestation on task completion.
+- MODERATOR path for filtering/approval and safe result return semantics.
+- Observability (metrics/alarms), operational runbooks, and abuse prevention (especially BRIDGE).
 
 **Exit criteria:** Billing, tier gating, observability, and operational recovery all verified in live environment.
 
@@ -1308,7 +1302,7 @@ theory app up --stage live
 ## 19. Repository Structure
 
 ```
-agentic-soul/
+lesser-soul/
 │
 ├── cmd/
 │   ├── orchestrator/
@@ -1332,7 +1326,7 @@ agentic-soul/
 │   │   ├── agents.go            registerAgent, delegateToAgent
 │   │   ├── memory.go            agentMemorySearch
 │   │   ├── notes.go             createNote, getNote
-│   │   └── subscription.go      agentActivity WebSocket subscription
+│   │   └── subscription.go      agentActivity WebSocket subscription (UI/observability)
 │   ├── inference/
 │   │   ├── client.go            OpenAI-compat client (Complete + Stream)
 │   │   └── ssm.go               SSM-backed URL + key loading
@@ -1374,6 +1368,8 @@ agentic-soul/
 ├── AGENTS.md                    Agent notes for automated agents working in this repo
 ├── SPEC.md                      This document
 └── reference/                   Cloned reference repos (not deployed)
+    ├── greater-components/
+    ├── GovTheory/
     ├── lesser/
     ├── lesser-host/
     └── simulacrum/
@@ -1389,7 +1385,7 @@ agentic-soul/
 | `delegateToAgent` | Mutation | Bootstrap: get delegation token |
 | `updateAgent` | Mutation | Update capabilities or version |
 | `agentMemorySearch` | Query | Retrieve memory context before LLM call |
-| `agentActivity` | Subscription | Orchestrator: receive result notifications |
+| `agentActivity` | Subscription | UI (Simulacrum `/agents`): real-time agent activity feed — **not** the orchestrator result path (SQS handles that) |
 | `myAgents` | Query | Bootstrap verification |
 | `agent(username)` | Query | Health check: verify agent is registered |
 | `createNote` | Mutation | Agent: post result |
@@ -1417,3 +1413,72 @@ github.com/nhooyr/websocket           latest    GraphQL subscription WebSocket
 github.com/oklog/ulid/v2              latest    ULID generation for RunLog SK
 github.com/stretchr/testify           v1.11.1+  Test assertions
 ```
+
+## Appendix D — Frontend: greater-components
+
+`greater-components` is the UI component library used by Simulacrum and the lesser-host web portal. Any frontend work related to `lesser-soul` — task dashboards, agent activity views, admin controls — uses this library rather than bespoke components.
+
+### What it is
+
+A Svelte 5 + TypeScript monorepo providing:
+- **50+ styled primitives** (`Button`, `Card`, `Tabs`, `Badge`, `Alert`, `StepIndicator`, `StreamingText`, `LoadingState`, etc.)
+- **Headless primitives** for fully custom styling
+- **Design token system** — CSS custom properties with light/dark/high-contrast themes
+- **Faces** — purpose-built component sets for social (`faces/social`), blog, community, and artist use cases
+- **Shared modules** — `shared/admin`, `shared/compose`, `shared/notifications`, `shared/messaging`
+- **Adapters** — `LesserGraphQLAdapter`, `WebSocketClient`, `TransportManager` (WebSocket → SSE → HTTP polling fallback)
+- **305+ icons** — Feather base + Fediverse-specific icons
+
+### Distribution model
+
+`greater-components` is consumed in **vendored mode**: components are copied as source code into the consuming repo (no runtime npm package dependency). The Greater CLI manages the vendored source and writes a lock/config file (`components.json`) in the consuming project.
+
+```bash
+greater init
+greater add faces/social shared/admin
+greater update --ref greater-vX.Y.Z
+```
+
+In vendored mode, installed source typically lives under:
+- `$lib/greater/*` (core packages: primitives, tokens, icons, headless, adapters, utils, content)
+- `$lib/components/*` (face + shared modules; path configurable via `components.json.aliases.components`)
+
+```typescript
+import { Button, StepIndicator, StreamingText } from '$lib/greater/primitives';
+import { createLesserGraphQLAdapter } from '$lib/greater/adapters/graphql';
+// Face/shared components are vendored under $lib/components/* (see components.json)
+```
+
+Simulacrum and the lesser-host web portal both use this model — the vendored source lives in `src/lib/greater/` and `web/src/lib/greater/` respectively.
+
+### Agent support
+
+The Lesser GraphQL adapter layer exposes agent fields (`Account.isAgent`, `Account.agentInfo`) so UIs can label/filter agent accounts and render agent metadata consistently.
+
+The `agentActivity` GraphQL subscription (`AgentActivityConnection`) is the **UI-side consumer** of Lesser's agent event stream. It is separate from the SQS `soul-results` queue used by the orchestrator. The Simulacrum `/agents` page consumes this subscription today.
+
+### Components relevant to lesser-soul UI
+
+| Component / module | Use in lesser-soul UI |
+|---|---|
+| `StepIndicator` | Task progress (PLANNING → RUNNING → DONE) |
+| `Timeline` / `TimelineVirtualized` | Agent activity feed; renders agent Notes natively |
+| `StreamingText` | Live inference output streamed to the browser |
+| `shared/admin` | Task management dashboard, agent registry, moderation |
+| `Status` (compound) | Individual agent Note display with metadata |
+| `Badge` | Agent type label (RESEARCHER, BRIDGE, etc.) |
+| `Alert` | Task error and budget-exceeded notices |
+| `Card` + `Tabs` | Dashboard layout (task detail, sub-task breakdown, run log) |
+| `LoadingState` / `Spinner` | In-flight task and subtask states |
+| `shared/notifications` | Notify operator on task completion or failure |
+| `LesserGraphQLAdapter` | Connect Simulacrum pages to Lesser GraphQL for soul data |
+| `TransportManager` | Resilient WebSocket → SSE → polling for live task updates |
+
+### Versioning and supply chain
+
+Pinned to signed Git tags (e.g., `greater-v0.1.12`). The `registry/index.json` in greater-components stores checksums for integrity verification. Downstream projects lock to a specific tag via `components.json` (e.g., Simulacrum `components.json`, lesser-host `web/components.json`).
+
+Near-term, plan for an internal registry for your systems to distribute:
+- CLI artifacts
+- a curated/pinned registry index + checksums
+- signature/attestation metadata (optional)
