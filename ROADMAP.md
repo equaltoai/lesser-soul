@@ -73,7 +73,7 @@ Deliverables:
 - Explicit documentation of which commands require `AWS_PROFILE=Sim` vs `AWS_PROFILE=Lesser`.
 
 Acceptance criteria:
-- [ ] A developer can follow docs and correctly choose `Sim` for instance deployments and `Lesser` for central deployments without guessing.
+- [x] A developer can follow docs and correctly choose `Sim` for instance deployments and `Lesser` for central deployments without guessing.
 
 ---
 

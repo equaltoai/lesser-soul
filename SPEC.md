@@ -1202,23 +1202,25 @@ Lambda security group rules (set in CDK) restrict outbound HTTP from `tool-execu
 
 ```json
 {
-  "lab": {
-    "instanceDomain": "dev.simulacrum.greater.website",
-    "lesserHostTrustUrl": "https://lesser.host",
-    "soulCreditsPerKTokens": 5,
-    "memoryCuratorSchedule": "rate(10 minutes)",
-    "tokenRefreshSchedule": "rate(24 hours)",
-    "bridgeEnabled": true,
-    "moderatorEnabled": false
-  },
-  "live": {
-    "instanceDomain": "simulacrum.greater.website",
-    "lesserHostTrustUrl": "https://lesser.host",
-    "soulCreditsPerKTokens": 5,
-    "memoryCuratorSchedule": "rate(10 minutes)",
-    "tokenRefreshSchedule": "rate(24 hours)",
-    "bridgeEnabled": true,
-    "moderatorEnabled": true
+  "context": {
+    "lab": {
+      "instanceDomain": "dev.simulacrum.greater.website",
+      "lesserHostTrustUrl": "https://lesser.host",
+      "soulCreditsPerKTokens": 5,
+      "memoryCuratorSchedule": "rate(10 minutes)",
+      "tokenRefreshSchedule": "rate(24 hours)",
+      "bridgeEnabled": true,
+      "moderatorEnabled": false
+    },
+    "live": {
+      "instanceDomain": "simulacrum.greater.website",
+      "lesserHostTrustUrl": "https://lesser.host",
+      "soulCreditsPerKTokens": 5,
+      "memoryCuratorSchedule": "rate(10 minutes)",
+      "tokenRefreshSchedule": "rate(24 hours)",
+      "bridgeEnabled": true,
+      "moderatorEnabled": true
+    }
   }
 }
 ```

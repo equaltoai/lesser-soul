@@ -1,4 +1,23 @@
 {
-  "app": "npx ts-node --prefer-ts-exts bin/soul.ts"
+  "app": "npx ts-node --prefer-ts-exts bin/soul.ts",
+  "context": {
+    "lab": {
+      "instanceDomain": "dev.simulacrum.greater.website",
+      "lesserHostTrustUrl": "https://lesser.host",
+      "soulCreditsPerKTokens": 5,
+      "memoryCuratorSchedule": "rate(10 minutes)",
+      "tokenRefreshSchedule": "rate(24 hours)",
+      "bridgeEnabled": true,
+      "moderatorEnabled": false
+    },
+    "live": {
+      "instanceDomain": "simulacrum.greater.website",
+      "lesserHostTrustUrl": "https://lesser.host",
+      "soulCreditsPerKTokens": 5,
+      "memoryCuratorSchedule": "rate(10 minutes)",
+      "tokenRefreshSchedule": "rate(24 hours)",
+      "bridgeEnabled": true,
+      "moderatorEnabled": true
+    }
+  }
 }
-
