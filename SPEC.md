@@ -310,29 +310,14 @@ The `agent-runner` Lambda loads the token for the active agent type at cold star
 
 Before each inference call, the agent-runner queries Lesser's built-in memory search:
 
-```graphql
-query AgentMemorySearch(
-  $query: String!
-  $tags: [String!]
-  $dateRange: DateRangeInput
-) {
-  agentMemorySearch(
-    query: $query
-    tags: $tags
-    dateRange: $dateRange
-    first: 10
-  ) {
-    edges {
-      node {
-        ... on Note {
-          id
-          content
-          createdAt
-          attributedTo { username }
-        }
-      }
-    }
-  }
+```http
+POST /api/v1/agents/memory/search
+Authorization: Bearer <agent token>
+Content-Type: application/json
+
+{
+  "query": "...",
+  "limit": 10
 }
 ```
 
@@ -340,16 +325,17 @@ The `hybridRetrievalEnabled` flag in `AdminAgentPolicy` controls whether Lesser 
 
 ### 5.5 Result posting
 
-After inference, the agent posts its result as a Lesser Note using its delegation token. The Note's `url` (Lesser object ID) is stored in `soul-table.SubTask.LesserNoteID` for audit linkage.
+After inference, the agent posts its result as a Lesser Note using its delegation token. The created object's ID (Lesser object ID) is stored in `soul-table.SubTask.LesserNoteID` for audit linkage.
 Optionally, the Note's `metadataJson` (via the agent activity system) can include `task_id`/`subtask_id` for UI correlation.
 
 ```graphql
 mutation CreateNote($input: CreateNoteInput!) {
   createNote(input: $input) {
-    id
-    content
-    createdAt
-    url
+    object {
+      id
+      content
+      createdAt
+    }
   }
 }
 ```

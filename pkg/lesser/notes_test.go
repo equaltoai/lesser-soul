@@ -45,10 +45,11 @@ func TestClient_CreateNote_MarshalsRequestAndParsesResponse(t *testing.T) {
 		_, _ = w.Write([]byte(`{
   "data": {
     "createNote": {
-      "id": "note_2",
-      "content": "note content",
-      "createdAt": "2026-01-01T00:00:00Z",
-      "url": "https://example.com/notes/note_2"
+      "object": {
+        "id": "note_2",
+        "content": "note content",
+        "createdAt": "2026-01-01T00:00:00Z"
+      }
     }
   }
 }`))
@@ -70,7 +71,7 @@ func TestClient_CreateNote_MarshalsRequestAndParsesResponse(t *testing.T) {
 	if got.ID != "note_2" {
 		t.Fatalf("id=%q want=%q", got.ID, "note_2")
 	}
-	if got.URL == "" {
-		t.Fatalf("url empty")
+	if got.Content != "note content" {
+		t.Fatalf("content=%q want=%q", got.Content, "note content")
 	}
 }

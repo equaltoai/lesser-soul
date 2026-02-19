@@ -33,10 +33,14 @@ export class SoulStack extends cdk.Stack {
     const inferenceUrlSsmPath = `${ssmBasePath}/inference/url`;
     const inferenceKeySsmPath = `${ssmBasePath}/inference/key`;
     const instanceKeySsmPath = `${ssmBasePath}/lesser-host/instance-key`;
+    const researcherTokenSsmPath = `${ssmBasePath}/agents/researcher/token`;
+    const researcherRefreshSsmPath = `${ssmBasePath}/agents/researcher/refresh`;
 
     new cdk.CfnOutput(this, "InferenceUrlSsmPath", { value: inferenceUrlSsmPath });
     new cdk.CfnOutput(this, "InferenceKeySsmPath", { value: inferenceKeySsmPath });
     new cdk.CfnOutput(this, "InstanceKeySsmPath", { value: instanceKeySsmPath });
+    new cdk.CfnOutput(this, "ResearcherTokenSsmPath", { value: researcherTokenSsmPath });
+    new cdk.CfnOutput(this, "ResearcherRefreshSsmPath", { value: researcherRefreshSsmPath });
 
     const table = new dynamodb.Table(this, "SoulTable", {
       tableName: `soul-${props.stage}`,
@@ -159,6 +163,32 @@ export class SoulStack extends cdk.Stack {
       },
     });
 
+    if (props.stage === "lab") {
+      const mockInference = new lambda.Function(this, "MockInference", {
+        functionName: `soul-mock-inference-${props.stage}`,
+        description: "lesser-soul mock OpenAI-compatible inference (lab only)",
+        runtime: lambda.Runtime.PROVIDED_AL2023,
+        architecture: lambda.Architecture.ARM_64,
+        handler: "bootstrap",
+        code: goCode("./cmd/mock-inference"),
+        timeout: cdk.Duration.seconds(10),
+        memorySize: 256,
+      });
+
+      const mockInferenceUrl = mockInference.addFunctionUrl({
+        authType: lambda.FunctionUrlAuthType.NONE,
+        cors: {
+          allowedOrigins: ["*"],
+          allowedMethods: [lambda.HttpMethod.POST],
+          allowedHeaders: ["authorization", "content-type"],
+        },
+      });
+
+      new cdk.CfnOutput(this, "MockInferenceFunctionUrl", {
+        value: mockInferenceUrl.url,
+      });
+    }
+
     const agentRunner = new lambda.Function(this, "AgentRunner", {
       functionName: `soul-agent-runner-${props.stage}`,
       description: "lesser-soul agent-runner (SQS)",
@@ -212,6 +242,8 @@ export class SoulStack extends cdk.Stack {
         ssmParamArn(inferenceUrlSsmPath),
         ssmParamArn(inferenceKeySsmPath),
         ssmParamArn(instanceKeySsmPath),
+        ssmParamArn(researcherTokenSsmPath),
+        ssmParamArn(researcherRefreshSsmPath),
       ],
     });
     orchestrator.addToRolePolicy(ssmReadPolicy);

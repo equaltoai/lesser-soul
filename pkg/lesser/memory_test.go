@@ -15,63 +15,54 @@ func TestClient_AgentMemorySearch_MarshalsRequestAndParsesResponse(t *testing.T)
 		if r.Method != http.MethodPost {
 			t.Fatalf("method=%s want=%s", r.Method, http.MethodPost)
 		}
-		if r.URL.Path != "/api/graphql" {
-			t.Fatalf("path=%s want=/api/graphql", r.URL.Path)
+		if r.URL.Path != "/api/v1/agents/memory/search" {
+			t.Fatalf("path=%s want=/api/v1/agents/memory/search", r.URL.Path)
 		}
 		if got := r.Header.Get("Authorization"); got != "Bearer test-token" {
 			t.Fatalf("Authorization=%q want=%q", got, "Bearer test-token")
 		}
 
 		var req struct {
-			Query     string         `json:"query"`
-			Variables map[string]any `json:"variables"`
+			Query     string   `json:"query"`
+			Tags      []string `json:"tags"`
+			DateRange *struct {
+				Start string `json:"start"`
+				End   string `json:"end"`
+			} `json:"date_range"`
+			Limit int `json:"limit"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 
-		if req.Query == "" {
-			t.Fatalf("query empty")
+		if req.Query != "memory query" {
+			t.Fatalf("query=%v want=%q", req.Query, "memory query")
 		}
-		if _, ok := req.Variables["query"]; !ok {
-			t.Fatalf("variables.query missing")
+		if len(req.Tags) != 2 || req.Tags[0] != "a" || req.Tags[1] != "b" {
+			t.Fatalf("tags=%v want=[a b]", req.Tags)
 		}
-		if req.Variables["query"] != "memory query" {
-			t.Fatalf("variables.query=%v want=%q", req.Variables["query"], "memory query")
+		if req.DateRange == nil || req.DateRange.Start != "2026-01-01" || req.DateRange.End != "2026-01-02" {
+			t.Fatalf("date_range=%v", req.DateRange)
 		}
-
-		tagsAny, ok := req.Variables["tags"].([]any)
-		if !ok {
-			t.Fatalf("variables.tags=%T want=[]any", req.Variables["tags"])
-		}
-		if len(tagsAny) != 2 || tagsAny[0] != "a" || tagsAny[1] != "b" {
-			t.Fatalf("variables.tags=%v want=[a b]", tagsAny)
-		}
-
-		drAny, ok := req.Variables["dateRange"].(map[string]any)
-		if !ok {
-			t.Fatalf("variables.dateRange=%T want=map[string]any", req.Variables["dateRange"])
-		}
-		if drAny["start"] != "2026-01-01T00:00:00Z" || drAny["end"] != "2026-01-02T00:00:00Z" {
-			t.Fatalf("variables.dateRange=%v", drAny)
+		if req.Limit != 10 {
+			t.Fatalf("limit=%d want=10", req.Limit)
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{
-  "data": {
-    "agentMemorySearch": {
-      "edges": [
-        {
-          "node": {
-            "id": "note_1",
-            "content": "hello",
-            "createdAt": "2026-01-01T00:00:00Z",
-            "attributedTo": { "username": "soul-researcher" }
-          }
-        }
-      ]
+  "results": [
+    {
+      "status": {
+        "id": "note_1",
+        "content": "hello",
+        "created_at": "2026-01-01T00:00:00Z",
+        "url": "https://example.com/objects/note_1",
+        "account": { "username": "soul-researcher" }
+      }
     }
-  }
+  ],
+  "total": 1,
+  "query_time_ms": 5
 }`))
 	}))
 	t.Cleanup(server.Close)

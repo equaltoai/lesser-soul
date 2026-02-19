@@ -166,7 +166,7 @@ func (s *Service) ApplyResult(ctx context.Context, msg models.SubTaskResultMessa
 		updateSubtaskExpr += ", lesser_note_id = :lesser_note_id"
 		values[":lesser_note_id"] = &dynamotypes.AttributeValueMemberS{Value: strings.TrimSpace(msg.LesserNoteID)}
 	} else {
-		updateSubtaskExpr += ", error = :error"
+		updateSubtaskExpr += ", #error = :error"
 		values[":error"] = &dynamotypes.AttributeValueMemberS{Value: strings.TrimSpace(msg.Error)}
 	}
 
@@ -176,8 +176,14 @@ func (s *Service) ApplyResult(ctx context.Context, msg models.SubTaskResultMessa
 			"pk": &dynamotypes.AttributeValueMemberS{Value: taskID},
 			"sk": &dynamotypes.AttributeValueMemberS{Value: subTaskSK},
 		},
-		UpdateExpression:          aws.String(updateSubtaskExpr),
-		ExpressionAttributeNames:  map[string]string{"#status": "status"},
+		UpdateExpression: aws.String(updateSubtaskExpr),
+		ExpressionAttributeNames: func() map[string]string {
+			names := map[string]string{"#status": "status"}
+			if status != models.SubTaskStatusDone {
+				names["#error"] = "error"
+			}
+			return names
+		}(),
 		ExpressionAttributeValues: values,
 	}); err != nil {
 		return fmt.Errorf("update subtask: %w", err)

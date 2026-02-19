@@ -66,6 +66,14 @@ func InstanceDomainFromEnv() (string, error) {
 	return instanceDomain, nil
 }
 
+func LesserGraphQLURLFromEnv() (string, error) {
+	u := strings.TrimSpace(os.Getenv(EnvLesserGraphQLURL))
+	if u == "" {
+		return "", fmt.Errorf("missing %s", EnvLesserGraphQLURL)
+	}
+	return u, nil
+}
+
 func StateTableNameFromEnv() (string, error) {
 	tableName := strings.TrimSpace(os.Getenv(EnvSoulStateTableName))
 	if tableName == "" {
@@ -137,4 +145,20 @@ func InferenceKeySSMPath(instanceDomain string) (string, error) {
 
 func LesserHostInstanceKeySSMPath(instanceDomain string) (string, error) {
 	return SSMPath(instanceDomain, "lesser-host", "instance-key")
+}
+
+func AgentTokenSSMPath(instanceDomain string, agentSlug string) (string, error) {
+	agentSlug = strings.ToLower(strings.TrimSpace(agentSlug))
+	if agentSlug == "" {
+		return "", fmt.Errorf("missing agentSlug")
+	}
+	return SSMPath(instanceDomain, "agents", agentSlug, "token")
+}
+
+func AgentRefreshSSMPath(instanceDomain string, agentSlug string) (string, error) {
+	agentSlug = strings.ToLower(strings.TrimSpace(agentSlug))
+	if agentSlug == "" {
+		return "", fmt.Errorf("missing agentSlug")
+	}
+	return SSMPath(instanceDomain, "agents", agentSlug, "refresh")
 }

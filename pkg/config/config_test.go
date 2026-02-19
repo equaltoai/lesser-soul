@@ -94,6 +94,17 @@ func TestSSMBasePathRejectsScheme(t *testing.T) {
 	}
 }
 
+func TestLesserGraphQLURLFromEnv(t *testing.T) {
+	t.Setenv(EnvLesserGraphQLURL, "https://example.com/api/graphql")
+	got, err := LesserGraphQLURLFromEnv()
+	if err != nil {
+		t.Fatalf("LesserGraphQLURLFromEnv() err=%v", err)
+	}
+	if got != "https://example.com/api/graphql" {
+		t.Fatalf("LesserGraphQLURLFromEnv()=%q", got)
+	}
+}
+
 func TestStateTableNameFromEnv(t *testing.T) {
 	t.Setenv(EnvSoulStateTableName, "soul-lab")
 	got, err := StateTableNameFromEnv()
@@ -122,5 +133,27 @@ func TestQueueURLsFromEnv(t *testing.T) {
 	}
 	if got2 == "" {
 		t.Fatalf("ResultsQueueURLFromEnv() empty")
+	}
+}
+
+func TestAgentTokenSSMPaths(t *testing.T) {
+	t.Parallel()
+
+	const domain = "dev.simulacrum.greater.website"
+
+	p, err := AgentTokenSSMPath(domain, "researcher")
+	if err != nil {
+		t.Fatalf("AgentTokenSSMPath() err=%v", err)
+	}
+	if p != "/soul/dev.simulacrum.greater.website/agents/researcher/token" {
+		t.Fatalf("AgentTokenSSMPath()=%q", p)
+	}
+
+	p2, err := AgentRefreshSSMPath(domain, "researcher")
+	if err != nil {
+		t.Fatalf("AgentRefreshSSMPath() err=%v", err)
+	}
+	if p2 != "/soul/dev.simulacrum.greater.website/agents/researcher/refresh" {
+		t.Fatalf("AgentRefreshSSMPath()=%q", p2)
 	}
 }

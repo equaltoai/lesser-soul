@@ -1,33 +1,15 @@
 package lesser
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"strings"
 )
-
-const agentMemorySearchQuery = `query AgentMemorySearch(
-  $query: String!
-  $tags: [String!]
-  $dateRange: DateRangeInput
-) {
-  agentMemorySearch(
-    query: $query
-    tags: $tags
-    dateRange: $dateRange
-    first: 10
-  ) {
-    edges {
-      node {
-        ... on Note {
-          id
-          content
-          createdAt
-          attributedTo { username }
-        }
-      }
-    }
-  }
-}`
 
 type DateRange struct {
 	Start string `json:"start"`
@@ -45,37 +27,119 @@ type AgentMemorySearchResult struct {
 }
 
 func (c *Client) AgentMemorySearch(ctx context.Context, params AgentMemorySearchParams) (*AgentMemorySearchResult, error) {
-	vars := struct {
-		Query     string     `json:"query"`
-		Tags      []string   `json:"tags,omitempty"`
-		DateRange *DateRange `json:"dateRange,omitempty"`
-	}{
-		Query:     params.Query,
-		Tags:      params.Tags,
-		DateRange: params.DateRange,
+	reqBody := struct {
+		Query     string   `json:"query,omitempty"`
+		Tags      []string `json:"tags,omitempty"`
+		DateRange *struct {
+			Start string `json:"start,omitempty"`
+			End   string `json:"end,omitempty"`
+		} `json:"date_range,omitempty"`
+		Limit int `json:"limit,omitempty"`
+	}{}
+	reqBody.Query = strings.TrimSpace(params.Query)
+	reqBody.Tags = params.Tags
+	reqBody.Limit = 10
+	if params.DateRange != nil {
+		reqBody.DateRange = &struct {
+			Start string `json:"start,omitempty"`
+			End   string `json:"end,omitempty"`
+		}{
+			Start: normalizeDateOnly(params.DateRange.Start),
+			End:   normalizeDateOnly(params.DateRange.End),
+		}
 	}
 
-	var resp graphQLResponse[struct {
-		AgentMemorySearch struct {
-			Edges []struct {
-				Node *Note `json:"node"`
-			} `json:"edges"`
-		} `json:"agentMemorySearch"`
-	}]
+	body, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("marshal agent memory search request: %w", err)
+	}
 
-	if err := c.doGraphQL(ctx, agentMemorySearchQuery, vars, &resp); err != nil {
+	endpoint, err := c.apiURL("/api/v1/agents/memory/search")
+	if err != nil {
 		return nil, err
 	}
-	if len(resp.Errors) > 0 {
-		return nil, fmt.Errorf("graphql errors: %s", resp.Errors[0].Message)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("new request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	if c.bearerToken != "" {
+		req.Header.Set("Authorization", "Bearer "+c.bearerToken)
 	}
 
-	out := &AgentMemorySearchResult{Notes: make([]Note, 0, len(resp.Data.AgentMemorySearch.Edges))}
-	for _, edge := range resp.Data.AgentMemorySearch.Edges {
-		if edge.Node == nil {
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("agent memory search request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(io.LimitReader(resp.Body, 2<<20))
+	if err != nil {
+		return nil, fmt.Errorf("read agent memory search response: %w", err)
+	}
+	if resp.StatusCode/100 != 2 {
+		return nil, fmt.Errorf("agent memory search http %d: %s", resp.StatusCode, strings.TrimSpace(string(respBody)))
+	}
+
+	var decoded struct {
+		Results []struct {
+			Status *struct {
+				ID        string `json:"id"`
+				Content   string `json:"content"`
+				CreatedAt string `json:"created_at"`
+				URL       string `json:"url"`
+				Account   struct {
+					Username string `json:"username"`
+				} `json:"account"`
+			} `json:"status"`
+		} `json:"results"`
+	}
+	if err := json.Unmarshal(respBody, &decoded); err != nil {
+		return nil, fmt.Errorf("unmarshal agent memory search response: %w", err)
+	}
+
+	out := &AgentMemorySearchResult{Notes: make([]Note, 0, len(decoded.Results))}
+	for _, r := range decoded.Results {
+		if r.Status == nil {
 			continue
 		}
-		out.Notes = append(out.Notes, *edge.Node)
+
+		note := Note{
+			ID:        strings.TrimSpace(r.Status.ID),
+			Content:   r.Status.Content,
+			CreatedAt: r.Status.CreatedAt,
+			URL:       r.Status.URL,
+		}
+		if username := strings.TrimSpace(r.Status.Account.Username); username != "" {
+			note.AttributedTo = &Actor{Username: username}
+		}
+		out.Notes = append(out.Notes, note)
 	}
 	return out, nil
+}
+
+func (c *Client) apiURL(path string) (string, error) {
+	path = strings.TrimSpace(path)
+	if path == "" || !strings.HasPrefix(path, "/") {
+		return "", fmt.Errorf("invalid api path %q", path)
+	}
+
+	parsed, err := url.Parse(c.graphqlURL)
+	if err != nil {
+		return "", fmt.Errorf("parse graphqlURL: %w", err)
+	}
+	parsed.Path = path
+	parsed.RawQuery = ""
+	parsed.Fragment = ""
+	return parsed.String(), nil
+}
+
+func normalizeDateOnly(v string) string {
+	v = strings.TrimSpace(v)
+	if len(v) >= 10 {
+		return v[:10]
+	}
+	return v
 }
