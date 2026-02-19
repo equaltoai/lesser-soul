@@ -117,9 +117,9 @@ Deliverables:
   - `/soul/<domain>/inference/key` (SecureString)
 
 Acceptance criteria:
-- [ ] In a deployed Lambda, cold-start loads inference URL/key from SSM (no secrets in env vars).
-- [ ] Unit tests cover request/response marshaling for Lesser GraphQL and inference requests.
-- [ ] Cloud inference responses without `usage` fail closed with a clear error (provider considered non-compliant).
+- [x] In a deployed Lambda, cold-start loads inference URL/key from SSM (no secrets in env vars).
+- [x] Unit tests cover request/response marshaling for Lesser GraphQL and inference requests.
+- [x] Cloud inference responses without `usage` fail closed with a clear error (provider considered non-compliant).
 
 ### Milestone 1.3 — Orchestrator: POST task → enqueue 1 RESEARCHER subtask
 

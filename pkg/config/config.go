@@ -10,6 +10,10 @@ import (
 const (
 	EnvSoulStage          = "SOUL_STAGE"
 	EnvSoulInstanceDomain = "SOUL_INSTANCE_DOMAIN"
+	EnvLesserGraphQLURL   = "LESSER_GRAPHQL_URL"
+
+	EnvSoulInferenceURLSSMPath = "SOUL_INFERENCE_URL_SSM_PATH"
+	EnvSoulInferenceKeySSMPath = "SOUL_INFERENCE_KEY_SSM_PATH"
 )
 
 type Stage string
@@ -56,6 +60,18 @@ func InstanceDomainFromEnv() (string, error) {
 		return "", err
 	}
 	return instanceDomain, nil
+}
+
+func InferenceSSMPathsFromEnv() (string, string, error) {
+	urlPath := strings.TrimSpace(os.Getenv(EnvSoulInferenceURLSSMPath))
+	if urlPath == "" {
+		return "", "", fmt.Errorf("missing %s (expected an SSM path like %q)", EnvSoulInferenceURLSSMPath, "/soul/<instance-domain>/inference/url")
+	}
+	keyPath := strings.TrimSpace(os.Getenv(EnvSoulInferenceKeySSMPath))
+	if keyPath == "" {
+		return "", "", fmt.Errorf("missing %s (expected an SSM path like %q)", EnvSoulInferenceKeySSMPath, "/soul/<instance-domain>/inference/key")
+	}
+	return urlPath, keyPath, nil
 }
 
 const SSMRootPath = "/soul"

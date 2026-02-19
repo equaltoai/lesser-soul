@@ -141,6 +141,12 @@ export class SoulStack extends cdk.Stack {
         SOUL_STATE_TABLE_NAME: table.tableName,
         SOUL_RESEARCHER_QUEUE_URL: researcherQueue.queueUrl,
         SOUL_RESULTS_QUEUE_URL: resultsQueue.queueUrl,
+        LESSER_GRAPHQL_URL: `https://${props.stageConfig.instanceDomain}/api/graphql`,
+        LESSER_HOST_TRUST_URL: props.stageConfig.lesserHostTrustUrl,
+        SOUL_CREDITS_PER_1K_TOKENS: String(props.stageConfig.soulCreditsPerKTokens),
+        SOUL_INFERENCE_URL_SSM_PATH: inferenceUrlSsmPath,
+        SOUL_INFERENCE_KEY_SSM_PATH: inferenceKeySsmPath,
+        SOUL_INSTANCE_KEY_SSM_PATH: instanceKeySsmPath,
       },
     });
 
@@ -168,6 +174,12 @@ export class SoulStack extends cdk.Stack {
         SOUL_STATE_TABLE_NAME: table.tableName,
         SOUL_RESEARCHER_QUEUE_URL: researcherQueue.queueUrl,
         SOUL_RESULTS_QUEUE_URL: resultsQueue.queueUrl,
+        LESSER_GRAPHQL_URL: `https://${props.stageConfig.instanceDomain}/api/graphql`,
+        LESSER_HOST_TRUST_URL: props.stageConfig.lesserHostTrustUrl,
+        SOUL_CREDITS_PER_1K_TOKENS: String(props.stageConfig.soulCreditsPerKTokens),
+        SOUL_INFERENCE_URL_SSM_PATH: inferenceUrlSsmPath,
+        SOUL_INFERENCE_KEY_SSM_PATH: inferenceKeySsmPath,
+        SOUL_INSTANCE_KEY_SSM_PATH: instanceKeySsmPath,
       },
     });
 
