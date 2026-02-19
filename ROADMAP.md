@@ -57,9 +57,9 @@ Deliverables:
 - Minimal CI entrypoint (even if CI wiring lives elsewhere): `go test ./...` + basic lint.
 
 Acceptance criteria:
-- [ ] `go test ./...` runs clean on a fresh clone.
-- [ ] `make build` produces binaries for `cmd/orchestrator`, `cmd/agent-runner` (stubs acceptable at this milestone).
-- [ ] `infra/cdk/` can synthesize (`cdk synth`) without AWS credentials.
+- [x] `go test ./...` runs clean on a fresh clone.
+- [x] `make build` produces binaries for `cmd/orchestrator`, `cmd/agent-runner` (stubs acceptable at this milestone).
+- [x] `infra/cdk/` can synthesize (`cdk synth`) without AWS credentials.
 
 ### Milestone 0.2 — Stage + domain configuration contract
 

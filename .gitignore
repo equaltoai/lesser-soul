@@ -2,3 +2,6 @@
 .pai/
 reference/
 external/
+bin/
+**/node_modules/
+**/cdk.out/
