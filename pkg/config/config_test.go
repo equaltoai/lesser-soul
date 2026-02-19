@@ -126,6 +126,42 @@ func TestQueueURLsFromEnv(t *testing.T) {
 		t.Fatalf("ResearcherQueueURLFromEnv() empty")
 	}
 
+	t.Setenv(EnvSoulAssistantQueueURL, "https://sqs.example.com/assistant")
+	gotAssistant, err := AssistantQueueURLFromEnv()
+	if err != nil {
+		t.Fatalf("AssistantQueueURLFromEnv() err=%v", err)
+	}
+	if gotAssistant == "" {
+		t.Fatalf("AssistantQueueURLFromEnv() empty")
+	}
+
+	t.Setenv(EnvSoulCuratorQueueURL, "https://sqs.example.com/curator")
+	gotCurator, err := CuratorQueueURLFromEnv()
+	if err != nil {
+		t.Fatalf("CuratorQueueURLFromEnv() err=%v", err)
+	}
+	if gotCurator == "" {
+		t.Fatalf("CuratorQueueURLFromEnv() empty")
+	}
+
+	t.Setenv(EnvSoulCustomCoderQueueURL, "https://sqs.example.com/custom-coder")
+	gotCustomCoder, err := CustomCoderQueueURLFromEnv()
+	if err != nil {
+		t.Fatalf("CustomCoderQueueURLFromEnv() err=%v", err)
+	}
+	if gotCustomCoder == "" {
+		t.Fatalf("CustomCoderQueueURLFromEnv() empty")
+	}
+
+	t.Setenv(EnvSoulCustomSummarizerQueueURL, "https://sqs.example.com/custom-summarizer")
+	gotCustomSummarizer, err := CustomSummarizerQueueURLFromEnv()
+	if err != nil {
+		t.Fatalf("CustomSummarizerQueueURLFromEnv() err=%v", err)
+	}
+	if gotCustomSummarizer == "" {
+		t.Fatalf("CustomSummarizerQueueURLFromEnv() empty")
+	}
+
 	t.Setenv(EnvSoulResultsQueueURL, "https://sqs.example.com/results")
 	got2, err := ResultsQueueURLFromEnv()
 	if err != nil {

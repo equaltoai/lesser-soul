@@ -203,8 +203,8 @@ Deliverables:
 - Bootstrap updated to register/delegate tokens for all enabled agents.
 
 Acceptance criteria:
-- [ ] All agent types can post Notes in Lesser using their own delegation tokens.
-- [ ] Disabling an agent via `AgentConfig.Enabled=false` prevents queue consumption or returns a clear failure state without retries.
+- [x] All agent types can post Notes in Lesser using their own delegation tokens.
+- [x] Disabling an agent via `AgentConfig.Enabled=false` prevents queue consumption or returns a clear failure state without retries.
 
 ### Milestone 2.2 — Orchestrator planning: multi-subtask DAG + dependency chaining
 

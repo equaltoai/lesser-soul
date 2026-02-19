@@ -12,9 +12,13 @@ const (
 	EnvSoulInstanceDomain = "SOUL_INSTANCE_DOMAIN"
 	EnvLesserGraphQLURL   = "LESSER_GRAPHQL_URL"
 
-	EnvSoulStateTableName     = "SOUL_STATE_TABLE_NAME"
-	EnvSoulResearcherQueueURL = "SOUL_RESEARCHER_QUEUE_URL"
-	EnvSoulResultsQueueURL    = "SOUL_RESULTS_QUEUE_URL"
+	EnvSoulStateTableName           = "SOUL_STATE_TABLE_NAME"
+	EnvSoulResearcherQueueURL       = "SOUL_RESEARCHER_QUEUE_URL"
+	EnvSoulAssistantQueueURL        = "SOUL_ASSISTANT_QUEUE_URL"
+	EnvSoulCuratorQueueURL          = "SOUL_CURATOR_QUEUE_URL"
+	EnvSoulCustomCoderQueueURL      = "SOUL_CUSTOM_CODER_QUEUE_URL"
+	EnvSoulCustomSummarizerQueueURL = "SOUL_CUSTOM_SUMMARIZER_QUEUE_URL"
+	EnvSoulResultsQueueURL          = "SOUL_RESULTS_QUEUE_URL"
 
 	EnvSoulInferenceURLSSMPath = "SOUL_INFERENCE_URL_SSM_PATH"
 	EnvSoulInferenceKeySSMPath = "SOUL_INFERENCE_KEY_SSM_PATH"
@@ -86,6 +90,38 @@ func ResearcherQueueURLFromEnv() (string, error) {
 	queueURL := strings.TrimSpace(os.Getenv(EnvSoulResearcherQueueURL))
 	if queueURL == "" {
 		return "", fmt.Errorf("missing %s", EnvSoulResearcherQueueURL)
+	}
+	return queueURL, nil
+}
+
+func AssistantQueueURLFromEnv() (string, error) {
+	queueURL := strings.TrimSpace(os.Getenv(EnvSoulAssistantQueueURL))
+	if queueURL == "" {
+		return "", fmt.Errorf("missing %s", EnvSoulAssistantQueueURL)
+	}
+	return queueURL, nil
+}
+
+func CuratorQueueURLFromEnv() (string, error) {
+	queueURL := strings.TrimSpace(os.Getenv(EnvSoulCuratorQueueURL))
+	if queueURL == "" {
+		return "", fmt.Errorf("missing %s", EnvSoulCuratorQueueURL)
+	}
+	return queueURL, nil
+}
+
+func CustomCoderQueueURLFromEnv() (string, error) {
+	queueURL := strings.TrimSpace(os.Getenv(EnvSoulCustomCoderQueueURL))
+	if queueURL == "" {
+		return "", fmt.Errorf("missing %s", EnvSoulCustomCoderQueueURL)
+	}
+	return queueURL, nil
+}
+
+func CustomSummarizerQueueURLFromEnv() (string, error) {
+	queueURL := strings.TrimSpace(os.Getenv(EnvSoulCustomSummarizerQueueURL))
+	if queueURL == "" {
+		return "", fmt.Errorf("missing %s", EnvSoulCustomSummarizerQueueURL)
 	}
 	return queueURL, nil
 }

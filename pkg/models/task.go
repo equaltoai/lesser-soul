@@ -27,6 +27,11 @@ type AgentType string
 
 const (
 	AgentTypeResearcher AgentType = "RESEARCHER"
+	AgentTypeAssistant  AgentType = "ASSISTANT"
+	AgentTypeCurator    AgentType = "CURATOR"
+
+	AgentTypeCustomCoder      AgentType = "CUSTOM:coder"
+	AgentTypeCustomSummarizer AgentType = "CUSTOM:summarizer"
 )
 
 type Task struct {

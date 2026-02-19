@@ -35,12 +35,28 @@ export class SoulStack extends cdk.Stack {
     const instanceKeySsmPath = `${ssmBasePath}/lesser-host/instance-key`;
     const researcherTokenSsmPath = `${ssmBasePath}/agents/researcher/token`;
     const researcherRefreshSsmPath = `${ssmBasePath}/agents/researcher/refresh`;
+    const assistantTokenSsmPath = `${ssmBasePath}/agents/assistant/token`;
+    const assistantRefreshSsmPath = `${ssmBasePath}/agents/assistant/refresh`;
+    const curatorTokenSsmPath = `${ssmBasePath}/agents/curator/token`;
+    const curatorRefreshSsmPath = `${ssmBasePath}/agents/curator/refresh`;
+    const customCoderTokenSsmPath = `${ssmBasePath}/agents/custom-coder/token`;
+    const customCoderRefreshSsmPath = `${ssmBasePath}/agents/custom-coder/refresh`;
+    const customSummarizerTokenSsmPath = `${ssmBasePath}/agents/custom-summarizer/token`;
+    const customSummarizerRefreshSsmPath = `${ssmBasePath}/agents/custom-summarizer/refresh`;
 
     new cdk.CfnOutput(this, "InferenceUrlSsmPath", { value: inferenceUrlSsmPath });
     new cdk.CfnOutput(this, "InferenceKeySsmPath", { value: inferenceKeySsmPath });
     new cdk.CfnOutput(this, "InstanceKeySsmPath", { value: instanceKeySsmPath });
     new cdk.CfnOutput(this, "ResearcherTokenSsmPath", { value: researcherTokenSsmPath });
     new cdk.CfnOutput(this, "ResearcherRefreshSsmPath", { value: researcherRefreshSsmPath });
+    new cdk.CfnOutput(this, "AssistantTokenSsmPath", { value: assistantTokenSsmPath });
+    new cdk.CfnOutput(this, "AssistantRefreshSsmPath", { value: assistantRefreshSsmPath });
+    new cdk.CfnOutput(this, "CuratorTokenSsmPath", { value: curatorTokenSsmPath });
+    new cdk.CfnOutput(this, "CuratorRefreshSsmPath", { value: curatorRefreshSsmPath });
+    new cdk.CfnOutput(this, "CustomCoderTokenSsmPath", { value: customCoderTokenSsmPath });
+    new cdk.CfnOutput(this, "CustomCoderRefreshSsmPath", { value: customCoderRefreshSsmPath });
+    new cdk.CfnOutput(this, "CustomSummarizerTokenSsmPath", { value: customSummarizerTokenSsmPath });
+    new cdk.CfnOutput(this, "CustomSummarizerRefreshSsmPath", { value: customSummarizerRefreshSsmPath });
 
     const table = new dynamodb.Table(this, "SoulTable", {
       tableName: `soul-${props.stage}`,
@@ -71,6 +87,34 @@ export class SoulStack extends cdk.Stack {
 
     const researcherQueue = new sqs.Queue(this, "ResearcherQueue", {
       queueName: `soul-researcher-${props.stage}`,
+      encryption: sqs.QueueEncryption.SQS_MANAGED,
+      retentionPeriod: cdk.Duration.days(4),
+      visibilityTimeout: cdk.Duration.seconds(60),
+    });
+
+    const assistantQueue = new sqs.Queue(this, "AssistantQueue", {
+      queueName: `soul-assistant-${props.stage}`,
+      encryption: sqs.QueueEncryption.SQS_MANAGED,
+      retentionPeriod: cdk.Duration.days(4),
+      visibilityTimeout: cdk.Duration.seconds(60),
+    });
+
+    const curatorQueue = new sqs.Queue(this, "CuratorQueue", {
+      queueName: `soul-curator-${props.stage}`,
+      encryption: sqs.QueueEncryption.SQS_MANAGED,
+      retentionPeriod: cdk.Duration.days(4),
+      visibilityTimeout: cdk.Duration.seconds(60),
+    });
+
+    const customCoderQueue = new sqs.Queue(this, "CustomCoderQueue", {
+      queueName: `soul-custom-coder-${props.stage}`,
+      encryption: sqs.QueueEncryption.SQS_MANAGED,
+      retentionPeriod: cdk.Duration.days(4),
+      visibilityTimeout: cdk.Duration.seconds(60),
+    });
+
+    const customSummarizerQueue = new sqs.Queue(this, "CustomSummarizerQueue", {
+      queueName: `soul-custom-summarizer-${props.stage}`,
       encryption: sqs.QueueEncryption.SQS_MANAGED,
       retentionPeriod: cdk.Duration.days(4),
       visibilityTimeout: cdk.Duration.seconds(60),
@@ -144,6 +188,10 @@ export class SoulStack extends cdk.Stack {
         SOUL_INSTANCE_DOMAIN: props.stageConfig.instanceDomain,
         SOUL_STATE_TABLE_NAME: table.tableName,
         SOUL_RESEARCHER_QUEUE_URL: researcherQueue.queueUrl,
+        SOUL_ASSISTANT_QUEUE_URL: assistantQueue.queueUrl,
+        SOUL_CURATOR_QUEUE_URL: curatorQueue.queueUrl,
+        SOUL_CUSTOM_CODER_QUEUE_URL: customCoderQueue.queueUrl,
+        SOUL_CUSTOM_SUMMARIZER_QUEUE_URL: customSummarizerQueue.queueUrl,
         SOUL_RESULTS_QUEUE_URL: resultsQueue.queueUrl,
         LESSER_GRAPHQL_URL: `https://${props.stageConfig.instanceDomain}/api/graphql`,
         LESSER_HOST_TRUST_URL: props.stageConfig.lesserHostTrustUrl,
@@ -203,6 +251,10 @@ export class SoulStack extends cdk.Stack {
         SOUL_INSTANCE_DOMAIN: props.stageConfig.instanceDomain,
         SOUL_STATE_TABLE_NAME: table.tableName,
         SOUL_RESEARCHER_QUEUE_URL: researcherQueue.queueUrl,
+        SOUL_ASSISTANT_QUEUE_URL: assistantQueue.queueUrl,
+        SOUL_CURATOR_QUEUE_URL: curatorQueue.queueUrl,
+        SOUL_CUSTOM_CODER_QUEUE_URL: customCoderQueue.queueUrl,
+        SOUL_CUSTOM_SUMMARIZER_QUEUE_URL: customSummarizerQueue.queueUrl,
         SOUL_RESULTS_QUEUE_URL: resultsQueue.queueUrl,
         LESSER_GRAPHQL_URL: `https://${props.stageConfig.instanceDomain}/api/graphql`,
         LESSER_HOST_TRUST_URL: props.stageConfig.lesserHostTrustUrl,
@@ -221,10 +273,30 @@ export class SoulStack extends cdk.Stack {
       new eventSources.SqsEventSource(researcherQueue, { batchSize: 10 }),
     );
 
+    agentRunner.addEventSource(
+      new eventSources.SqsEventSource(assistantQueue, { batchSize: 10 }),
+    );
+
+    agentRunner.addEventSource(
+      new eventSources.SqsEventSource(curatorQueue, { batchSize: 10 }),
+    );
+
+    agentRunner.addEventSource(
+      new eventSources.SqsEventSource(customCoderQueue, { batchSize: 10 }),
+    );
+
+    agentRunner.addEventSource(
+      new eventSources.SqsEventSource(customSummarizerQueue, { batchSize: 10 }),
+    );
+
     table.grantReadWriteData(orchestrator);
     table.grantReadWriteData(agentRunner);
 
     researcherQueue.grantSendMessages(orchestrator);
+    assistantQueue.grantSendMessages(orchestrator);
+    curatorQueue.grantSendMessages(orchestrator);
+    customCoderQueue.grantSendMessages(orchestrator);
+    customSummarizerQueue.grantSendMessages(orchestrator);
     resultsQueue.grantSendMessages(agentRunner);
 
     const ssmParamArn = (parameterName: string): string =>
@@ -244,6 +316,14 @@ export class SoulStack extends cdk.Stack {
         ssmParamArn(instanceKeySsmPath),
         ssmParamArn(researcherTokenSsmPath),
         ssmParamArn(researcherRefreshSsmPath),
+        ssmParamArn(assistantTokenSsmPath),
+        ssmParamArn(assistantRefreshSsmPath),
+        ssmParamArn(curatorTokenSsmPath),
+        ssmParamArn(curatorRefreshSsmPath),
+        ssmParamArn(customCoderTokenSsmPath),
+        ssmParamArn(customCoderRefreshSsmPath),
+        ssmParamArn(customSummarizerTokenSsmPath),
+        ssmParamArn(customSummarizerRefreshSsmPath),
       ],
     });
     orchestrator.addToRolePolicy(ssmReadPolicy);
@@ -253,6 +333,10 @@ export class SoulStack extends cdk.Stack {
     new cdk.CfnOutput(this, "ResearcherQueueUrl", {
       value: researcherQueue.queueUrl,
     });
+    new cdk.CfnOutput(this, "AssistantQueueUrl", { value: assistantQueue.queueUrl });
+    new cdk.CfnOutput(this, "CuratorQueueUrl", { value: curatorQueue.queueUrl });
+    new cdk.CfnOutput(this, "CustomCoderQueueUrl", { value: customCoderQueue.queueUrl });
+    new cdk.CfnOutput(this, "CustomSummarizerQueueUrl", { value: customSummarizerQueue.queueUrl });
     new cdk.CfnOutput(this, "ResultsQueueUrl", { value: resultsQueue.queueUrl });
     new cdk.CfnOutput(this, "OrchestratorFunctionUrl", {
       value: orchestratorUrl.url,

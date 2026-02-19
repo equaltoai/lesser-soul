@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -8,6 +9,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -15,7 +17,6 @@ import (
 	dynamotypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
-	"github.com/equaltoai/lesser-soul/pkg/config"
 	"github.com/equaltoai/lesser-soul/pkg/inference"
 	"github.com/equaltoai/lesser-soul/pkg/lesser"
 	"github.com/equaltoai/lesser-soul/pkg/models"
@@ -115,16 +116,15 @@ func (s *Service) handleMessage(ctx context.Context, body string) error {
 		return fmt.Errorf("message missing task_id or subtask_sk")
 	}
 
-	switch msg.AgentType {
-	case models.AgentTypeResearcher:
-		return s.runResearcherTurn(ctx, taskID, subTaskSK)
-	default:
-		log.Printf("agent-runner: unsupported agent_type=%q (task_id=%s subtask_sk=%s)", msg.AgentType, taskID, subTaskSK)
-		return nil
+	agentType := models.AgentType(strings.TrimSpace(string(msg.AgentType)))
+	if agentType == "" {
+		return fmt.Errorf("message missing agent_type")
 	}
+
+	return s.runAgentTurn(ctx, taskID, subTaskSK, agentType)
 }
 
-func (s *Service) runResearcherTurn(ctx context.Context, taskID string, subTaskSK string) error {
+func (s *Service) runAgentTurn(ctx context.Context, taskID string, subTaskSK string, agentType models.AgentType) error {
 	goal, err := s.loadSubTaskGoal(ctx, taskID, subTaskSK)
 	if err != nil {
 		return err
@@ -139,9 +139,19 @@ func (s *Service) runResearcherTurn(ctx context.Context, taskID string, subTaskS
 		return err
 	}
 
-	tokenPath, err := config.AgentTokenSSMPath(s.instanceDomain, "researcher")
+	agentCfg, err := s.loadAgentConfig(ctx, agentType)
 	if err != nil {
-		return err
+		_ = s.writeRunLog(ctx, taskID, subTaskSK, agentType, "ERROR", 0, 0, "", "load_agent_config_failed: "+err.Error())
+		return s.publishFailure(ctx, taskID, subTaskSK, err)
+	}
+	if !agentCfg.Enabled {
+		_ = s.writeRunLog(ctx, taskID, subTaskSK, agentType, "ERROR", 0, 0, "", "agent_disabled")
+		return s.publishFailure(ctx, taskID, subTaskSK, fmt.Errorf("agent %s disabled", agentType))
+	}
+
+	tokenPath := strings.TrimSpace(agentCfg.TokenSSMPath)
+	if tokenPath == "" {
+		return s.publishFailure(ctx, taskID, subTaskSK, fmt.Errorf("agent config missing token_ssm_path (agent_type=%s)", agentType))
 	}
 	agentToken, err := s.loadSecureString(ctx, tokenPath)
 	if err != nil {
@@ -155,35 +165,53 @@ func (s *Service) runResearcherTurn(ctx context.Context, taskID string, subTaskS
 
 	mem, err := lesserClient.AgentMemorySearch(ctx, lesser.AgentMemorySearchParams{Query: goal})
 	if err != nil {
-		_ = s.writeRunLog(ctx, taskID, subTaskSK, "ERROR", 0, 0, "", "memory_search_failed: "+err.Error())
+		_ = s.writeRunLog(ctx, taskID, subTaskSK, agentType, "ERROR", 0, 0, "", "memory_search_failed: "+err.Error())
 		return s.publishFailure(ctx, taskID, subTaskSK, err)
 	}
 
-	systemPrompt := buildResearcherSystemPrompt(mem)
+	systemPrompt, err := renderSystemPrompt(agentCfg.SystemPromptTemplate, systemPromptData{
+		Goal:      goal,
+		AgentType: string(agentType),
+		Memory:    normalizeMemoryNotes(mem),
+	})
+	if err != nil {
+		_ = s.writeRunLog(ctx, taskID, subTaskSK, agentType, "ERROR", 0, 0, "", "render_system_prompt_failed: "+err.Error())
+		return s.publishFailure(ctx, taskID, subTaskSK, err)
+	}
+
+	modelID := strings.TrimSpace(agentCfg.ModelID)
+	if modelID == "" {
+		modelID = "llama-3.3-70b"
+	}
+	maxTokens := agentCfg.MaxTokens
+	if maxTokens <= 0 {
+		maxTokens = 1200
+	}
+
 	resp, err := s.inference.Complete(ctx, inference.CompletionRequest{
-		Model:        "llama-3.3-70b",
+		Model:        modelID,
 		SystemPrompt: systemPrompt,
 		Messages: []inference.Message{
 			{Role: "user", Content: goal},
 		},
-		MaxTokens:   1200,
+		MaxTokens:   maxTokens,
 		Temperature: 0.2,
 	})
 	if err != nil {
-		_ = s.writeRunLog(ctx, taskID, subTaskSK, "ERROR", 0, 0, "", "inference_failed: "+err.Error())
+		_ = s.writeRunLog(ctx, taskID, subTaskSK, agentType, "ERROR", 0, 0, "", "inference_failed: "+err.Error())
 		return s.publishFailure(ctx, taskID, subTaskSK, err)
 	}
-	_ = s.writeRunLog(ctx, taskID, subTaskSK, "LLM_CALLED", resp.Usage.PromptTokens, resp.Usage.CompletionTokens, "", "")
+	_ = s.writeRunLog(ctx, taskID, subTaskSK, agentType, "LLM_CALLED", resp.Usage.PromptTokens, resp.Usage.CompletionTokens, "", "")
 
 	note, err := lesserClient.CreateNote(ctx, lesser.CreateNoteInput{
 		Content:    resp.Content,
 		Visibility: lesser.VisibilityUnlisted,
 	})
 	if err != nil {
-		_ = s.writeRunLog(ctx, taskID, subTaskSK, "ERROR", 0, 0, "", "create_note_failed: "+err.Error())
+		_ = s.writeRunLog(ctx, taskID, subTaskSK, agentType, "ERROR", 0, 0, "", "create_note_failed: "+err.Error())
 		return s.publishFailure(ctx, taskID, subTaskSK, err)
 	}
-	_ = s.writeRunLog(ctx, taskID, subTaskSK, "NOTE_POSTED", 0, 0, note.ID, "")
+	_ = s.writeRunLog(ctx, taskID, subTaskSK, agentType, "NOTE_POSTED", 0, 0, note.ID, "")
 
 	if err := s.publishResult(ctx, models.SubTaskResultMessage{
 		TaskID:       taskID,
@@ -192,10 +220,10 @@ func (s *Service) runResearcherTurn(ctx context.Context, taskID string, subTaskS
 		TokensIn:     resp.Usage.PromptTokens,
 		TokensOut:    resp.Usage.CompletionTokens,
 	}); err != nil {
-		_ = s.writeRunLog(ctx, taskID, subTaskSK, "ERROR", 0, 0, "", "publish_result_failed: "+err.Error())
+		_ = s.writeRunLog(ctx, taskID, subTaskSK, agentType, "ERROR", 0, 0, "", "publish_result_failed: "+err.Error())
 		return err
 	}
-	_ = s.writeRunLog(ctx, taskID, subTaskSK, "RESULT_PUBLISHED", 0, 0, note.ID, "")
+	_ = s.writeRunLog(ctx, taskID, subTaskSK, agentType, "RESULT_PUBLISHED", 0, 0, note.ID, "")
 	return nil
 }
 
@@ -291,10 +319,14 @@ func (s *Service) loadSecureString(ctx context.Context, name string) (string, er
 	return value, nil
 }
 
-func (s *Service) writeRunLog(ctx context.Context, taskID string, subTaskSK string, eventType string, tokensIn int, tokensOut int, lesserRef string, detail string) error {
+func (s *Service) writeRunLog(ctx context.Context, taskID string, subTaskSK string, agentType models.AgentType, eventType string, tokensIn int, tokensOut int, lesserRef string, detail string) error {
 	eventType = strings.TrimSpace(eventType)
 	if eventType == "" {
 		return nil
+	}
+	agentType = models.AgentType(strings.TrimSpace(string(agentType)))
+	if agentType == "" {
+		agentType = "UNKNOWN"
 	}
 
 	now := s.now().UTC()
@@ -308,7 +340,7 @@ func (s *Service) writeRunLog(ctx context.Context, taskID string, subTaskSK stri
 	item := map[string]dynamotypes.AttributeValue{
 		"pk":         &dynamotypes.AttributeValueMemberS{Value: taskID},
 		"sk":         &dynamotypes.AttributeValueMemberS{Value: ulid.Make().String()},
-		"agent_type": &dynamotypes.AttributeValueMemberS{Value: string(models.AgentTypeResearcher)},
+		"agent_type": &dynamotypes.AttributeValueMemberS{Value: string(agentType)},
 		"event_type": &dynamotypes.AttributeValueMemberS{Value: eventType},
 		"ttl":        &dynamotypes.AttributeValueMemberN{Value: strconv.FormatInt(ttl, 10)},
 	}
@@ -338,14 +370,18 @@ func (s *Service) writeRunLog(ctx context.Context, taskID string, subTaskSK stri
 	return nil
 }
 
-func buildResearcherSystemPrompt(mem *lesser.AgentMemorySearchResult) string {
-	var b strings.Builder
-	b.WriteString("You are a research agent.\n")
-	b.WriteString("Use the memory notes below if relevant. If irrelevant, ignore them.\n\n")
+type systemPromptData struct {
+	Goal      string
+	AgentType string
+	Memory    []string
+}
+
+func normalizeMemoryNotes(mem *lesser.AgentMemorySearchResult) []string {
 	if mem == nil || len(mem.Notes) == 0 {
-		return b.String()
+		return nil
 	}
-	b.WriteString("Memory:\n")
+
+	out := make([]string, 0, len(mem.Notes))
 	for i, n := range mem.Notes {
 		if i >= 10 {
 			break
@@ -354,14 +390,94 @@ func buildResearcherSystemPrompt(mem *lesser.AgentMemorySearchResult) string {
 		if len(content) > 500 {
 			content = content[:500]
 		}
-		b.WriteString("- ")
-		b.WriteString(content)
-		b.WriteString("\n")
+		if content == "" {
+			continue
+		}
+		out = append(out, content)
 	}
-	return b.String()
+	return out
+}
+
+func renderSystemPrompt(tpl string, data systemPromptData) (string, error) {
+	tpl = strings.TrimSpace(tpl)
+	if tpl == "" {
+		tpl = "You are an agent.\n\nGoal:\n{{.Goal}}\n"
+	}
+
+	t, err := template.New("system_prompt").Option("missingkey=error").Parse(tpl)
+	if err != nil {
+		return "", fmt.Errorf("parse system prompt template: %w", err)
+	}
+
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("execute system prompt template: %w", err)
+	}
+	return buf.String(), nil
 }
 
 func isConditionalCheckFailed(err error) bool {
 	var ccfe *dynamotypes.ConditionalCheckFailedException
 	return errors.As(err, &ccfe)
+}
+
+func (s *Service) loadAgentConfig(ctx context.Context, agentType models.AgentType) (*models.AgentConfig, error) {
+	pk, err := models.AgentConfigPK(s.instanceDomain)
+	if err != nil {
+		return nil, err
+	}
+	sk, err := models.AgentConfigSK(agentType)
+	if err != nil {
+		return nil, err
+	}
+
+	out, err := s.db.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName:      aws.String(s.tableName),
+		ConsistentRead: aws.Bool(true),
+		Key: map[string]dynamotypes.AttributeValue{
+			"pk": &dynamotypes.AttributeValueMemberS{Value: pk},
+			"sk": &dynamotypes.AttributeValueMemberS{Value: sk},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get agent config: %w", err)
+	}
+	if len(out.Item) == 0 {
+		return nil, fmt.Errorf("agent config not found (pk=%s sk=%s)", pk, sk)
+	}
+
+	cfg := &models.AgentConfig{
+		PK:        pk,
+		SK:        sk,
+		AgentType: agentType,
+	}
+
+	if v, ok := out.Item["enabled"].(*dynamotypes.AttributeValueMemberBOOL); ok {
+		cfg.Enabled = v.Value
+	}
+	if v, ok := out.Item["model_id"].(*dynamotypes.AttributeValueMemberS); ok {
+		cfg.ModelID = strings.TrimSpace(v.Value)
+	}
+	if v, ok := out.Item["max_tokens"].(*dynamotypes.AttributeValueMemberN); ok {
+		if n, parseErr := strconv.Atoi(strings.TrimSpace(v.Value)); parseErr == nil {
+			cfg.MaxTokens = n
+		}
+	}
+	if v, ok := out.Item["system_prompt_template"].(*dynamotypes.AttributeValueMemberS); ok {
+		cfg.SystemPromptTemplate = v.Value
+	}
+	if v, ok := out.Item["token_ssm_path"].(*dynamotypes.AttributeValueMemberS); ok {
+		cfg.TokenSSMPath = strings.TrimSpace(v.Value)
+	}
+	if v, ok := out.Item["refresh_ssm_path"].(*dynamotypes.AttributeValueMemberS); ok {
+		cfg.RefreshSSMPath = strings.TrimSpace(v.Value)
+	}
+	if v, ok := out.Item["lesser_username"].(*dynamotypes.AttributeValueMemberS); ok {
+		cfg.LesserUsername = strings.TrimSpace(v.Value)
+	}
+	if v, ok := out.Item["queue_url"].(*dynamotypes.AttributeValueMemberS); ok {
+		cfg.QueueURL = strings.TrimSpace(v.Value)
+	}
+
+	return cfg, nil
 }
