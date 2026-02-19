@@ -1404,8 +1404,8 @@ lesser-soul/
 ## Appendix C — Key dependencies (go.mod)
 
 ```
-github.com/theory-cloud/apptheory     v0.8.0+   Lambda routing + middleware
-github.com/theory-cloud/tabletheory   v1.3.0+   DynamoDB ORM
+github.com/theory-cloud/apptheory     v0.9.1+   Lambda routing + middleware
+github.com/theory-cloud/tabletheory   v1.4.0+   DynamoDB ORM
 github.com/aws/aws-lambda-go          v1.52.0+  Lambda runtime
 github.com/aws/aws-sdk-go-v2          v1.41.1+  AWS SDK
 github.com/openai/openai-go           v1.12.0+  OpenAI-compat inference client
