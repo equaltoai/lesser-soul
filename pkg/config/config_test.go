@@ -93,3 +93,34 @@ func TestSSMBasePathRejectsScheme(t *testing.T) {
 		t.Fatalf("SSMBasePath() expected error")
 	}
 }
+
+func TestStateTableNameFromEnv(t *testing.T) {
+	t.Setenv(EnvSoulStateTableName, "soul-lab")
+	got, err := StateTableNameFromEnv()
+	if err != nil {
+		t.Fatalf("StateTableNameFromEnv() err=%v", err)
+	}
+	if got != "soul-lab" {
+		t.Fatalf("StateTableNameFromEnv()=%q", got)
+	}
+}
+
+func TestQueueURLsFromEnv(t *testing.T) {
+	t.Setenv(EnvSoulResearcherQueueURL, "https://sqs.example.com/researcher")
+	got, err := ResearcherQueueURLFromEnv()
+	if err != nil {
+		t.Fatalf("ResearcherQueueURLFromEnv() err=%v", err)
+	}
+	if got == "" {
+		t.Fatalf("ResearcherQueueURLFromEnv() empty")
+	}
+
+	t.Setenv(EnvSoulResultsQueueURL, "https://sqs.example.com/results")
+	got2, err := ResultsQueueURLFromEnv()
+	if err != nil {
+		t.Fatalf("ResultsQueueURLFromEnv() err=%v", err)
+	}
+	if got2 == "" {
+		t.Fatalf("ResultsQueueURLFromEnv() empty")
+	}
+}

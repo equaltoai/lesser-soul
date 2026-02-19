@@ -183,6 +183,10 @@ export class SoulStack extends cdk.Stack {
       },
     });
 
+    orchestrator.addEventSource(
+      new eventSources.SqsEventSource(resultsQueue, { batchSize: 10 }),
+    );
+
     agentRunner.addEventSource(
       new eventSources.SqsEventSource(researcherQueue, { batchSize: 10 }),
     );

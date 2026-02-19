@@ -12,6 +12,10 @@ const (
 	EnvSoulInstanceDomain = "SOUL_INSTANCE_DOMAIN"
 	EnvLesserGraphQLURL   = "LESSER_GRAPHQL_URL"
 
+	EnvSoulStateTableName     = "SOUL_STATE_TABLE_NAME"
+	EnvSoulResearcherQueueURL = "SOUL_RESEARCHER_QUEUE_URL"
+	EnvSoulResultsQueueURL    = "SOUL_RESULTS_QUEUE_URL"
+
 	EnvSoulInferenceURLSSMPath = "SOUL_INFERENCE_URL_SSM_PATH"
 	EnvSoulInferenceKeySSMPath = "SOUL_INFERENCE_KEY_SSM_PATH"
 )
@@ -60,6 +64,30 @@ func InstanceDomainFromEnv() (string, error) {
 		return "", err
 	}
 	return instanceDomain, nil
+}
+
+func StateTableNameFromEnv() (string, error) {
+	tableName := strings.TrimSpace(os.Getenv(EnvSoulStateTableName))
+	if tableName == "" {
+		return "", fmt.Errorf("missing %s", EnvSoulStateTableName)
+	}
+	return tableName, nil
+}
+
+func ResearcherQueueURLFromEnv() (string, error) {
+	queueURL := strings.TrimSpace(os.Getenv(EnvSoulResearcherQueueURL))
+	if queueURL == "" {
+		return "", fmt.Errorf("missing %s", EnvSoulResearcherQueueURL)
+	}
+	return queueURL, nil
+}
+
+func ResultsQueueURLFromEnv() (string, error) {
+	queueURL := strings.TrimSpace(os.Getenv(EnvSoulResultsQueueURL))
+	if queueURL == "" {
+		return "", fmt.Errorf("missing %s", EnvSoulResultsQueueURL)
+	}
+	return queueURL, nil
 }
 
 func InferenceSSMPathsFromEnv() (string, string, error) {

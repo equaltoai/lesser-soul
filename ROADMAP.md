@@ -137,9 +137,9 @@ Deliverables:
   - stores `lesser_note_id` (or URL) as the audit reference
 
 Acceptance criteria:
-- [ ] Calling `POST /soul/tasks` returns `200` with `task_id`.
-- [ ] DynamoDB contains `Task` with status `RUNNING` then `DONE`.
-- [ ] DynamoDB contains `SubTask` with status `DONE` and a non-empty `lesser_note_id`.
+- [x] Calling `POST /soul/tasks` returns `200` with `task_id`.
+- [x] DynamoDB contains `Task` with status `RUNNING` then `DONE`.
+- [x] DynamoDB contains `SubTask` with status `DONE` and a non-empty `lesser_note_id`.
 
 ### Milestone 1.4 — Agent-runner (RESEARCHER): memory → inference → Note post → result publish
 
