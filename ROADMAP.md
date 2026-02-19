@@ -94,13 +94,13 @@ Deliverables:
 - Basic IAM least-privilege policies for Lambda ↔ DynamoDB/SQS/SSM.
 
 Acceptance criteria:
-- [ ] `cdk deploy` (stage `lab`) completes successfully in the instance account.
-- [ ] DynamoDB table exists with expected name and tags (stage + instance domain).
-- [ ] SQS queues exist and Lambda event source mapping is enabled for agent-runner.
-- [ ] `POST https://<instance-domain>/soul/tasks` is reachable through CloudFront (not a direct Lambda URL).
-- [ ] CloudFront `/soul/*` behavior forwards auth (`Authorization`) to the orchestrator origin (no auth header stripping).
-- [ ] CloudFront `/soul/*` behavior forwards query strings (no loss of `?task_id=...` / pagination parameters, etc.).
-- [ ] CloudFront does not cache `/soul/*` responses (use a “caching disabled” policy) to prevent cross-user leakage.
+- [x] `cdk deploy` (stage `lab`) completes successfully in the instance account.
+- [x] DynamoDB table exists with expected name and tags (stage + instance domain).
+- [x] SQS queues exist and Lambda event source mapping is enabled for agent-runner.
+- [x] `POST https://<instance-domain>/soul/tasks` is reachable through CloudFront (not a direct Lambda URL).
+- [x] CloudFront `/soul/*` behavior forwards auth (`Authorization`) to the orchestrator origin (no auth header stripping).
+- [x] CloudFront `/soul/*` behavior forwards query strings (no loss of `?task_id=...` / pagination parameters, etc.).
+- [x] CloudFront does not cache `/soul/*` responses (use a “caching disabled” policy) to prevent cross-user leakage.
 
 ### Milestone 1.2 — Lesser client + inference client (instance runtime)
 
