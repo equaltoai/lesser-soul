@@ -156,9 +156,9 @@ Deliverables:
 - Credit debit call to `lesser-host` trust API can be stubbed/disabled for MVP (but interface should exist).
 
 Acceptance criteria:
-- [ ] For a test task, the agent posts a Note to Lesser attributed to `soul-researcher`.
-- [ ] `RunLog` entries exist for LLM call + Note post + result publish (with truncation rules).
-- [ ] The orchestrator observes completion via `soul-results` and marks the Task `DONE`.
+- [x] For a test task, the agent posts a Note to Lesser attributed to `soul-researcher`.
+- [x] `RunLog` entries exist for LLM call + Note post + result publish (with truncation rules).
+- [x] The orchestrator observes completion via `soul-results` and marks the Task `DONE`.
 
 ### Milestone 1.5 — Bootstrap: register agent + verify + delegate token → SSM
 
@@ -177,9 +177,9 @@ Deliverables:
   - logs `expiresIn` so the operator knows when re-bootstrap is needed before M2.5 is live
 
 Acceptance criteria:
-- [ ] After bootstrap, SSM contains `SecureString` parameters at the expected paths.
-- [ ] `soul-researcher` is verified (not in quarantine) in Lesser — confirmed via `agent(username: "soul-researcher") { verified }` query.
-- [ ] A fresh Lambda deployment can read the token from SSM and successfully post a Note attributed to `soul-researcher`.
+- [x] After bootstrap, SSM contains `SecureString` parameters at the expected paths.
+- [x] `soul-researcher` is verified (not in quarantine) in Lesser — confirmed via `agent(username: "soul-researcher") { verified }` query.
+- [x] A fresh Lambda deployment can read the token from SSM and successfully post a Note attributed to `soul-researcher`.
 
 **Phase 1 exit criteria:**
 - [ ] POST a research goal; receive a Lesser Note URL containing the synthesized result, attributed to `soul-researcher`.

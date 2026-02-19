@@ -9,8 +9,10 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.41.1
 	github.com/aws/aws-sdk-go-v2/config v1.32.9
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.55.0
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.41.1
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.42.21
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.67.8
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/oklog/ulid/v2 v2.1.1
 )
 
