@@ -9,17 +9,29 @@ Issue: `equaltoai/lesser-soul#3`
 Deliver the remaining work required to submit the Agent Social Attribution FEP without carrying known conformance gaps
 into submission.
 
-This repo is plan-only. Implementation work lands in `lesser`, `lesser-host`, and infrastructure for `lessersoul.ai`.
+This repo now owns the namespace infrastructure for this work. Remaining implementation spans `lesser` and the deployed
+`spec.lessersoul.ai` infrastructure in `lesser-soul`.
 
 ## Outcome Definition
 
 The work is complete when all of the following are true:
 
 - `delegated_by` is guaranteed to serialize as a full `https://` actor URI in federated ActivityPub payloads
-- `https://lessersoul.ai/ns/agent-attribution/v1` resolves directly to the JSON-LD context with the correct content type
+- `https://spec.lessersoul.ai/ns/agent-attribution/v1` resolves directly to the JSON-LD context with the correct content
+  type
 - creator decisions on CC0 scope, named authorship, and namespace versioning are recorded
 - the FEP draft no longer needs an implementation caveat for known non-conformance
 - the draft is ready for Codeberg submission with only slug assignment and submission date remaining
+
+## Current Status Snapshot
+
+As of 2026-03-18:
+
+- the namespace infrastructure is deployed from `lesser-soul`
+- the live hostname for the namespace work is `spec.lessersoul.ai`, not the earlier `lessersoul.ai` placeholder
+- issue `#4` inventory is captured in `docs/spec-lessersoul-ai-inventory.md`
+- issue `#5` delivery shape is live at `https://spec.lessersoul.ai/ns/agent-attribution/v1`
+- `lesser#214` has landed, so the serialization blocker is no longer the critical path here
 
 ## Planning Principles
 
@@ -54,7 +66,7 @@ Follow-up:
 - if storage cleanup is still desired after submission, run it as a separate backfill using AppTheory job-ledger
   patterns rather than coupling it to the submission path
 
-### 2. Namespace delivery on `lessersoul.ai`
+### 2. Namespace delivery on `spec.lessersoul.ai`
 
 Use a **static namespace origin** for `/ns/*`, fronted by the existing or newly managed CloudFront distribution.
 
@@ -66,9 +78,8 @@ Why:
 
 ### 3. Repository ownership
 
-- `lesser-soul`: planning, specification, and submission checklist
+- `lesser-soul`: planning, specification, namespace hosting, CloudFront behavior, and deployment automation
 - `lesser`: ActivityPub serialization fix and tests
-- `lesser-host` or infra repo owning `lessersoul.ai`: namespace hosting, CloudFront behavior, deployment automation
 - creator: decisions A, B, and C from the issue
 
 ## Workstreams
@@ -87,21 +98,21 @@ Exit criteria:
 
 - all three decisions are recorded in issue comments, an ADR, or the final FEP metadata notes
 
-### WS2. Ops inventory for `lessersoul.ai`
+### WS2. Ops inventory for `spec.lessersoul.ai`
 
 Owner: ops / infra maintainer
 
 Questions to answer:
 
-- which CloudFront distribution currently serves `lessersoul.ai`
-- whether Route 53 is already authoritative for the domain
-- whether an ACM certificate already covers the domain
-- what origin currently produces the lander and redirect behavior
+- which CloudFront distribution currently serves `spec.lessersoul.ai`
+- whether Route 53 is authoritative for the domain
+- which ACM certificate covers the hostname
+- what origin layout serves the static site and namespace path
 
 Deliverables:
 
 - a short inventory note naming the current distribution, origin layout, DNS authority, and certificate ownership
-- a decision on whether `/ns/*` is added to the existing distribution or introduced through a replacement managed edge
+- confirmation that `lesser-soul` owns the deployed `/ns/*` behavior
 
 Exit criteria:
 
@@ -130,7 +141,7 @@ Acceptance:
 
 ### WS4. Namespace infrastructure
 
-Owner: `lesser-host` / infra maintainer
+Owner: `lesser-soul` / infra maintainer
 
 Deliverables:
 
@@ -148,7 +159,8 @@ Preferred deployment shape:
 
 Acceptance:
 
-- `curl -H "Accept: application/ld+json" https://lessersoul.ai/ns/agent-attribution/v1` returns the JSON-LD document
+- `curl -H "Accept: application/ld+json" https://spec.lessersoul.ai/ns/agent-attribution/v1` returns the JSON-LD
+  document
 - no 301, 302, HTML shell, or JavaScript redirect is involved
 - repeated fetches are cache-safe and deterministic
 
@@ -275,13 +287,13 @@ Notes:
 ## Detailed Acceptance Checklist
 
 - [ ] creator decisions A, B, and C are recorded
-- [ ] ops inventory for `lessersoul.ai` is complete
-- [ ] `lesser` serializes `delegated_by` as a full actor URI in all federated cases
-- [ ] regression tests cover legacy stored short handles
-- [ ] `https://lessersoul.ai/ns/agent-attribution/v1` serves the JSON-LD context directly
-- [ ] namespace response uses `application/ld+json`
-- [ ] namespace response is redirect-free
-- [ ] namespace response includes cross-origin access needed for JSON-LD fetches
+- [x] ops inventory for `spec.lessersoul.ai` is complete
+- [x] `lesser` serializes `delegated_by` as a full actor URI in all federated cases
+- [x] regression tests cover legacy stored short handles
+- [x] `https://spec.lessersoul.ai/ns/agent-attribution/v1` serves the JSON-LD context directly
+- [x] namespace response uses `application/ld+json`
+- [x] namespace response is redirect-free
+- [x] namespace response includes cross-origin access needed for JSON-LD fetches
 - [ ] FEP draft caveat is removed or consciously retained with documented reason
 - [ ] Codeberg submission is prepared and tracked
 
@@ -316,7 +328,6 @@ Mitigation:
 ## Immediate Next Actions
 
 1. Record creator decisions A, B, and C in writing.
-2. Answer the `lessersoul.ai` ops inventory questions and name the deployment owner.
-3. Open the `lesser` implementation task for serialization-time `delegated_by` normalization with regression tests.
-4. Prepare the static JSON-LD context asset and CloudFront `/ns/*` routing change.
-
+2. Update the FEP draft so it names `https://spec.lessersoul.ai/ns/agent-attribution/v1` as the live namespace URL.
+3. Remove the implementation caveat if it still references the pre-`lesser#214` serialization gap.
+4. Prepare the final Codeberg submission pass and capture slug/date after submission.
