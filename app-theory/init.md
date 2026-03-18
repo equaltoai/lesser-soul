@@ -147,7 +147,7 @@ theory app up --aws-profile my-profile --stage lab
 
 # live deploy with external DNS and an existing ACM certificate
 CERTIFICATE_ARN=arn:aws:acm:us-east-1:123456789012:certificate/abcd... \
-DOMAIN_NAME=lessersoul.ai \
+DOMAIN_NAME=spec.lessersoul.ai \
 theory app up --aws-profile my-profile --stage live
 
 # destroy live stage

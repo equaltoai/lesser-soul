@@ -50,7 +50,7 @@ export class LesserSoulSiteStack extends Stack {
     super(scope, id, props);
 
     const stage = readOptionalContext(this, 'stage') ?? 'lab';
-    const domainName = readOptionalContext(this, 'domainName') ?? (stage === 'live' ? 'lessersoul.ai' : undefined);
+    const domainName = readOptionalContext(this, 'domainName') ?? (stage === 'live' ? 'spec.lessersoul.ai' : undefined);
     const hostedZoneName = readOptionalContext(this, 'hostedZoneName');
     const certificateArn = readOptionalContext(this, 'certificateArn');
 
@@ -111,7 +111,7 @@ function handler(event) {
     });
 
     const baseHeadersPolicy = new cloudfront.ResponseHeadersPolicy(this, 'BaseHeadersPolicy', {
-      comment: 'Baseline security headers for lessersoul.ai static pages',
+      comment: 'Baseline security headers for spec.lessersoul.ai static pages',
       securityHeadersBehavior: {
         strictTransportSecurity: {
           accessControlMaxAge: Duration.days(365 * 2),

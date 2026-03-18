@@ -1,7 +1,7 @@
 # Docs and Deployment Scope
 
 Maintainer documentation for the soul registry still lives primarily in `lesser-host`, but `lesser-soul` now also hosts
-the public `lessersoul.ai` site and the FEP namespace/deployment work for agent social attribution.
+the public `spec.lessersoul.ai` site and the FEP namespace/deployment work for agent social attribution.
 
 Registry implementation references:
 
@@ -12,7 +12,7 @@ Registry implementation references:
 This repo now contains:
 
 - specifications and roadmaps for Lesser Soul and related FEP work
-- CDK deployment for `lessersoul.ai`
+- CDK deployment for `spec.lessersoul.ai`
 - static namespace assets such as `/ns/agent-attribution/v1`
 
 Roadmaps and plans:

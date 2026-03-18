@@ -6,5 +6,5 @@ const app = new App();
 const stage = String(app.node.tryGetContext('stage') ?? 'lab').trim() || 'lab';
 
 new LesserSoulSiteStack(app, `LesserSoulSite-${stage}`, {
-  description: `lessersoul.ai static site and namespace (${stage})`,
+  description: `spec.lessersoul.ai static site and namespace (${stage})`,
 });

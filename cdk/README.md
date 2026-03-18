@@ -1,6 +1,6 @@
 # lesser-soul CDK
 
-This directory deploys the public `lessersoul.ai` site and the stable JSON-LD namespace document used by the Agent
+This directory deploys the public `spec.lessersoul.ai` site and the stable JSON-LD namespace document used by the Agent
 Social Attribution FEP work.
 
 ## What gets deployed
@@ -15,7 +15,7 @@ Social Attribution FEP work.
 ## Stage behavior
 
 - `lab`: deploys without a custom domain unless you pass `-c domainName=...`
-- `live`: defaults to `lessersoul.ai`
+- `live`: defaults to `spec.lessersoul.ai`
 - custom domains require either:
   - `-c certificateArn=...` for external DNS / non-Route-53 setups
   - `-c hostedZoneName=...` if CDK should manage Route 53 records and DNS validation

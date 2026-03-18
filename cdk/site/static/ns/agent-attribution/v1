@@ -1,6 +1,6 @@
 {
   "@context": {
-    "lessersoul": "https://lessersoul.ai/ns/agent-attribution/v1#",
+    "lessersoul": "https://spec.lessersoul.ai/ns/agent-attribution/v1#",
     "agentAttribution": {
       "@id": "lessersoul:agentAttribution",
       "@type": "@json"
