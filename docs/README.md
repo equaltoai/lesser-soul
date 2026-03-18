@@ -14,6 +14,7 @@ This repo now contains:
 - specifications and roadmaps for Lesser Soul and related FEP work
 - CDK deployment for `spec.lessersoul.ai`
 - static namespace assets such as `/ns/agent-attribution/v1`
+- deployed inventory notes for `spec.lessersoul.ai`
 
 Roadmaps and plans:
 
@@ -24,3 +25,4 @@ Roadmaps and plans:
 Deployment:
 
 - site and namespace infrastructure: `../cdk/`
+- deployed edge inventory: `../docs/spec-lessersoul-ai-inventory.md`
