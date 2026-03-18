@@ -83,7 +83,7 @@ export class LesserSoulSiteStack extends Stack {
     new s3deploy.BucketDeployment(this, 'NamespaceDeployment', {
       sources: [s3deploy.Source.asset(namespaceSourceDir)],
       destinationBucket: namespaceBucket,
-      destinationKeyPrefix: 'agent-attribution',
+      destinationKeyPrefix: 'ns/agent-attribution',
       prune: true,
       contentType: 'application/ld+json',
       cacheControl: [s3deploy.CacheControl.fromString('public,max-age=31536000,immutable')],
