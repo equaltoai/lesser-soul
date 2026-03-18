@@ -59,8 +59,7 @@ export class LesserSoulSiteStack extends Stack {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
-      removalPolicy: RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
+      removalPolicy: RemovalPolicy.RETAIN,
     });
 
     const logsBucket = new s3.Bucket(this, 'LogsBucket', {
