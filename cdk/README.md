@@ -16,11 +16,15 @@ Social Attribution FEP work.
 
 - `lab`: deploys without a custom domain unless you pass `-c domainName=...`
 - `live`: defaults to `lessersoul.ai`
+- custom domains require either:
+  - `-c certificateArn=...` for external DNS / non-Route-53 setups
+  - `-c hostedZoneName=...` if CDK should manage Route 53 records and DNS validation
 
 Optional CDK context:
 
 - `stage`
 - `domainName`
+- `certificateArn`
 - `hostedZoneName`
 
 ## Commands
@@ -30,4 +34,5 @@ npm ci
 npm run build:site
 npx cdk synth -c stage=lab
 npx cdk deploy --all -c stage=live
+npx cdk deploy --all -c stage=live -c certificateArn=arn:aws:acm:us-east-1:123456789012:certificate/abcd...
 ```

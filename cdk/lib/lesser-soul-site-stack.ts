@@ -37,15 +37,22 @@ function readOptionalContext(scope: Construct, name: string): string | undefined
   return text.length > 0 ? text : undefined;
 }
 
+function requireContext(scope: Construct, name: string, reason: string): string {
+  const value = readOptionalContext(scope, name);
+  if (!value) {
+    throw new Error(`Missing required context "${name}": ${reason}`);
+  }
+  return value;
+}
+
 export class LesserSoulSiteStack extends Stack {
   constructor(scope: Construct, id: string, props: StackProps = {}) {
     super(scope, id, props);
 
     const stage = readOptionalContext(this, 'stage') ?? 'lab';
     const domainName = readOptionalContext(this, 'domainName') ?? (stage === 'live' ? 'lessersoul.ai' : undefined);
-    const hostedZoneName = domainName
-      ? readOptionalContext(this, 'hostedZoneName') ?? 'lessersoul.ai'
-      : undefined;
+    const hostedZoneName = readOptionalContext(this, 'hostedZoneName');
+    const certificateArn = readOptionalContext(this, 'certificateArn');
 
     const siteBucket = new s3.Bucket(this, 'SiteBucket', {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -164,15 +171,26 @@ function handler(event) {
     let certificate: acm.ICertificate | undefined;
     let hostedZone: route53.IHostedZone | undefined;
 
-    if (domainName && hostedZoneName) {
-      hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
-        domainName: hostedZoneName,
-      });
+    if (domainName) {
+      if (certificateArn) {
+        certificate = acm.Certificate.fromCertificateArn(this, 'SiteCertificate', certificateArn);
+      } else if (hostedZoneName) {
+        hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
+          domainName: hostedZoneName,
+        });
 
-      certificate = new acm.Certificate(this, 'SiteCertificate', {
-        domainName,
-        validation: acm.CertificateValidation.fromDns(hostedZone),
-      });
+        certificate = new acm.Certificate(this, 'SiteCertificate', {
+          domainName,
+          validation: acm.CertificateValidation.fromDns(hostedZone),
+        });
+      } else {
+        const requiredName = requireContext(
+          this,
+          'certificateArn',
+          'provide an ACM certificate ARN for external DNS setups, or pass hostedZoneName to let CDK manage Route 53 and DNS validation',
+        );
+        void requiredName;
+      }
     }
 
     const distribution = new cloudfront.Distribution(this, 'Distribution', {

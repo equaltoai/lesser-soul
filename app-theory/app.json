@@ -18,7 +18,7 @@
   },
   "cdk": {
     "dir": "cdk",
-    "up": "AWS_PROFILE={{AWS_PROFILE}} npm ci && npm run build:site && npx cdk deploy --all -c stage={{STAGE}}",
-    "down": "AWS_PROFILE={{AWS_PROFILE}} npm ci && npx cdk destroy --all -c stage={{STAGE}}"
+    "up": "AWS_PROFILE={{AWS_PROFILE}} npm ci && npm run build:site && DOMAIN_ARG=${DOMAIN_NAME:+-c domainName=$DOMAIN_NAME} CERT_ARG=${CERTIFICATE_ARN:+-c certificateArn=$CERTIFICATE_ARN} ZONE_ARG=${HOSTED_ZONE_NAME:+-c hostedZoneName=$HOSTED_ZONE_NAME} npx cdk deploy --all -c stage={{STAGE}} $DOMAIN_ARG $CERT_ARG $ZONE_ARG",
+    "down": "AWS_PROFILE={{AWS_PROFILE}} npm ci && DOMAIN_ARG=${DOMAIN_NAME:+-c domainName=$DOMAIN_NAME} CERT_ARG=${CERTIFICATE_ARN:+-c certificateArn=$CERTIFICATE_ARN} ZONE_ARG=${HOSTED_ZONE_NAME:+-c hostedZoneName=$HOSTED_ZONE_NAME} npx cdk destroy --all -c stage={{STAGE}} $DOMAIN_ARG $CERT_ARG $ZONE_ARG"
   }
 }

@@ -81,6 +81,8 @@ The goal is to produce a repo that:
 
 3. Implement deploy/destroy entrypoints that match the contract commands:
    - Commands must be stage-aware (a `stage` context or equivalent) and must not silently deploy to the wrong account.
+   - If production DNS is not hosted in Route 53, the deploy flow must support passing an ACM certificate ARN instead of
+     assuming hosted-zone control.
 
 4. Ensure the CDK app uses the same stage naming as the contract:
    - stages: `lab` (default) and `live` (override)
@@ -116,6 +118,12 @@ That contract defines:
 - `cdk.up`: deploy command (expects AWS profile + stage at runtime)
 - `cdk.down`: destroy command (expects AWS profile + stage at runtime)
 
+Optional runtime environment for domain deployment:
+
+- `DOMAIN_NAME` to override the deployed hostname
+- `CERTIFICATE_ARN` for custom domains when DNS is not hosted in Route 53
+- `HOSTED_ZONE_NAME` only when CDK should manage Route 53 validation and alias records
+
 ### Using the contract with `theory app up/down`
 
 `theory app up` deploys the CDK stack(s) described by `app-theory/app.json`.
@@ -136,6 +144,11 @@ AWS_PROFILE=my-profile theory app up
 
 # explicit stage selection
 theory app up --aws-profile my-profile --stage lab
+
+# live deploy with external DNS and an existing ACM certificate
+CERTIFICATE_ARN=arn:aws:acm:us-east-1:123456789012:certificate/abcd... \
+DOMAIN_NAME=lessersoul.ai \
+theory app up --aws-profile my-profile --stage live
 
 # destroy live stage
 theory app down --aws-profile my-profile --stage live
