@@ -139,6 +139,13 @@ function handler(event) {
 
     const namespaceHeadersPolicy = new cloudfront.ResponseHeadersPolicy(this, 'NamespaceHeadersPolicy', {
       comment: 'JSON-LD namespace headers for /ns/*',
+      corsBehavior: {
+        accessControlAllowCredentials: false,
+        accessControlAllowHeaders: ['*'],
+        accessControlAllowMethods: ['GET', 'HEAD', 'OPTIONS'],
+        accessControlAllowOrigins: ['*'],
+        originOverride: true,
+      },
       securityHeadersBehavior: {
         strictTransportSecurity: {
           accessControlMaxAge: Duration.days(365 * 2),
@@ -153,15 +160,6 @@ function handler(event) {
           override: true,
         },
         xssProtection: { protection: true, modeBlock: true, override: true },
-      },
-      customHeadersBehavior: {
-        customHeaders: [
-          {
-            header: 'access-control-allow-origin',
-            value: '*',
-            override: true,
-          },
-        ],
       },
     });
 
