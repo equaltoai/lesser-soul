@@ -3,12 +3,12 @@
   "frameworks": {
     "apptheory": {
       "module": "github.com/theory-cloud/apptheory",
-      "version": "v0.10.0",
+      "version": "v0.18.1",
       "docs": ["docs/getting-started.md", "docs/migration/from-lift.md"]
     },
     "tabletheory": {
       "module": "github.com/theory-cloud/tabletheory",
-      "version": "v1.4.0",
+      "version": "v1.4.2",
       "docs": [
         "docs/getting-started.md",
         "docs/api-reference.md",
@@ -18,7 +18,7 @@
   },
   "cdk": {
     "dir": "cdk",
-    "up": "AWS_PROFILE={{AWS_PROFILE}} npm ci && npx cdk deploy --all -c stage={{STAGE}}",
+    "up": "AWS_PROFILE={{AWS_PROFILE}} npm ci && npm run build:site && npx cdk deploy --all -c stage={{STAGE}}",
     "down": "AWS_PROFILE={{AWS_PROFILE}} npm ci && npx cdk destroy --all -c stage={{STAGE}}"
   }
 }
