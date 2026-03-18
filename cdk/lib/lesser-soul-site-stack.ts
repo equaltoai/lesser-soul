@@ -69,14 +69,6 @@ export class LesserSoulSiteStack extends Stack {
       removalPolicy: RemovalPolicy.RETAIN,
     });
 
-    const logsBucket = new s3.Bucket(this, 'LogsBucket', {
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      encryption: s3.BucketEncryption.S3_MANAGED,
-      enforceSSL: true,
-      removalPolicy: RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-    });
-
     const siteOutputDir = requireDir('site output', '../dist/site');
     new s3deploy.BucketDeployment(this, 'SiteDeployment', {
       sources: [s3deploy.Source.asset(siteOutputDir)],
@@ -193,8 +185,6 @@ function handler(event) {
 
     const distribution = new cloudfront.Distribution(this, 'Distribution', {
       defaultRootObject: 'index.html',
-      enableLogging: true,
-      logBucket: logsBucket,
       domainNames: domainName ? [domainName] : undefined,
       certificate,
       defaultBehavior: {
