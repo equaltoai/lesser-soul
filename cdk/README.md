@@ -36,3 +36,7 @@ npx cdk synth -c stage=lab
 npx cdk deploy --all -c stage=live
 npx cdk deploy --all -c stage=live -c certificateArn=arn:aws:acm:us-east-1:123456789012:certificate/abcd...
 ```
+
+## License
+
+This project follows the repository's GNU Affero General Public License v3.0. See [`../LICENSE`](../LICENSE) for details.
