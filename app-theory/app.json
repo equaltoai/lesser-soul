@@ -3,12 +3,12 @@
   "frameworks": {
     "apptheory": {
       "module": "github.com/theory-cloud/apptheory",
-      "version": "v0.18.1",
+      "version": "v0.19.1",
       "docs": ["docs/getting-started.md", "docs/migration/from-lift.md"]
     },
     "tabletheory": {
       "module": "github.com/theory-cloud/tabletheory",
-      "version": "v1.4.2",
+      "version": "v1.5.1",
       "docs": [
         "docs/getting-started.md",
         "docs/api-reference.md",
