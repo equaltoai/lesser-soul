@@ -1,0 +1,9 @@
+model_instructions_file = "steward.md"
+
+  [mcp_servers.soul_lab]
+  url = "https://lab.theorymcp.ai/equaltoai/agents/soul/mcp"
+  oauth_resource = "https://lab.theorymcp.ai/equaltoai/agents/soul/mcp"
+  scopes = ["mcp:tools", "ai.kb.query", "memory.append"]
+
+[mcp_servers.soul_lab.tools.memory_append]
+approval_mode = "approve"
