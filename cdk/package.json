@@ -16,12 +16,13 @@
   },
   "dependencies": {
     "@theory-cloud/facetheory": "https://github.com/theory-cloud/FaceTheory/releases/download/v4.0.1/theory-cloud-facetheory-4.0.1.tgz",
-    "aws-cdk-lib": "file:vendor/aws-cdk-lib-2.245.0-brace-expansion-5.0.5.tgz",
+    "aws-cdk-lib": "2.258.0",
     "constructs": "10.6.0"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
-    "tsx": "^4.21.0",
+    "aws-cdk": "2.1130.0",
+    "tsx": "^4.23.1",
     "typescript": "^5.9.3"
   }
 }
