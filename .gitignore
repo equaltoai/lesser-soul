@@ -5,3 +5,10 @@ external/
 cdk/cdk.out/
 cdk/dist/
 cdk/node_modules/
+.agents/
+.claude/
+.claude/
+.codex/
+.codex/
+GEMINI.md
+opencode.json
