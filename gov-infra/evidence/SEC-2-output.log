@@ -1,0 +1,3 @@
+$ check_secrets_hygiene
+
+secrets hygiene: no tracked secret files or AWS credential patterns detected

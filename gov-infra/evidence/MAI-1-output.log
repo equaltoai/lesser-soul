@@ -1,0 +1,3 @@
+$ check_ci_hook
+
+CI hook PASS: .github/workflows/ci.yml invokes 'bash gov-infra/verifiers/gov-verify-rubric.sh'

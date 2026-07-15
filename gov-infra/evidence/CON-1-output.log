@@ -1,0 +1,5 @@
+$ check_json_wellformed
+
+validated 1 static JSON/JSON-LD object(s):
+  - cdk/site/static/ns/agent-attribution/v1
+all static JSON/JSON-LD objects are well-formed

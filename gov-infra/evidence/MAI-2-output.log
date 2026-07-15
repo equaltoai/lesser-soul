@@ -1,0 +1,24 @@
+$ check_governance_scope
+
+governance materialization scope (allowed: gov-infra/**, .github/workflows/ci.yml):
+  OK  .github/workflows/ci.yml
+  OK  gov-infra/README.md
+  OK  gov-infra/evidence/.gov-rubric-results.jsonl
+  OK  gov-infra/evidence/CMP-1-output.log
+  OK  gov-infra/evidence/CMP-2-output.log
+  OK  gov-infra/evidence/CMP-3-output.log
+  OK  gov-infra/evidence/COM-1-output.log
+  OK  gov-infra/evidence/COM-2-output.log
+  OK  gov-infra/evidence/COM-3-output.log
+  OK  gov-infra/evidence/CON-1-output.log
+  OK  gov-infra/evidence/CON-2-output.log
+  OK  gov-infra/evidence/MAI-1-output.log
+  OK  gov-infra/evidence/MAI-2-output.log
+  OK  gov-infra/evidence/QUA-1-output.log
+  OK  gov-infra/evidence/SEC-1-output.log
+  OK  gov-infra/evidence/SEC-2-output.log
+  OK  gov-infra/genome-provenance.json
+  OK  gov-infra/pack.json
+  OK  gov-infra/schemas/gov-rubric-report.schema.json
+  OK  gov-infra/verifiers/gov-verify-rubric.sh
+governance-only scope PASS
