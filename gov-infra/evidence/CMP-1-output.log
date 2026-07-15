@@ -1,0 +1,5 @@
+$ check_profile_resolution
+
+profile resolution PASS: software_repo_gov_infra
+  verifier: bash gov-infra/verifiers/gov-verify-rubric.sh
+  report:   gov-infra/evidence/gov-rubric-report.json (schema gov_rubric_report.v1)

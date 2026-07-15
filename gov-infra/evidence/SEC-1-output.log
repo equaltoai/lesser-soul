@@ -1,0 +1,4 @@
+$ check_supply_chain
+
+lockfile present: cdk/package-lock.json
+GitHub Actions: all 'uses:' pinned by commit SHA (no floating @vN refs)

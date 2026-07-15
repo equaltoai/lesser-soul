@@ -1,0 +1,12 @@
+$ check_namespace_v1_invariant
+
+namespace /ns/agent-attribution/v1 invariant preserved (frozen-forever /v1 contract intact):
+{
+  "@context": {
+    "lessersoul": "https://spec.lessersoul.ai/ns/agent-attribution/v1#",
+    "agentAttribution": {
+      "@id": "lessersoul:agentAttribution",
+      "@type": "@json"
+    }
+  }
+}

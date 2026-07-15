@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Offline, no-deploy CDK synth context (never real account/credentials).
+      CDK_DEFAULT_ACCOUNT: "000000000000"
+      CDK_DEFAULT_REGION: "us-east-1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Set up Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: cdk/package-lock.json
+
+      - name: Install site/CDK dependencies
+        run: cd cdk && npm ci
+
+      - name: Governance rubric (software_repo_gov_infra)
+        run: bash gov-infra/verifiers/gov-verify-rubric.sh

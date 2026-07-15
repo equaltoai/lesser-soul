@@ -1,0 +1,79 @@
+{
+  "schema": "gov_infra_pack.v1",
+  "pack": {
+    "version": "2026.07.15-project48-m3-gov-rubric-materialization"
+  },
+  "project": {
+    "name": "lesser-soul",
+    "slug": "lesser-soul",
+    "repository": "equaltoai/lesser-soul",
+    "steward": "soul"
+  },
+  "profile": {
+    "id": "software_repo_gov_infra",
+    "resolved_via": "namespace_governance_profile_get (equaltoai namespace route)",
+    "terminates_in_verifier": true,
+    "ci_hook_required": true,
+    "role": "ci_core",
+    "retirement_policy": "never_retired",
+    "allowed_write_scope": ["gov-infra/**", ".github/workflows/ci.yml"],
+    "branch_profile_consistency_surfaces": ["soul", "steward", "AGENTS.md", "skills", "CI"]
+  },
+  "verifier": {
+    "command": "bash gov-infra/verifiers/gov-verify-rubric.sh",
+    "report_path": "gov-infra/evidence/gov-rubric-report.json",
+    "report_schema": "gov_rubric_report.v1",
+    "schema_file": "gov-infra/schemas/gov-rubric-report.schema.json"
+  },
+  "authoritative_sources_inspected": [
+    {
+      "surface": "namespace_governance_profile_get",
+      "fact": "resolved software_repo_gov_infra for lesser-soul: verifier 'bash gov-infra/verifiers/gov-verify-rubric.sh', report 'gov-infra/evidence/gov-rubric-report.json', schema gov_rubric_report.v1, ci_hook_required=true, gov-infra required/ci_core/never_retired, all deploy/merge/sign/cloud/repo mutation authority denied"
+    },
+    {
+      "surface": "govern_lifecycle_turn (phase=govern, steward_type=software_repo_steward)",
+      "fact": "software governance flow gov-init -> gov-validate -> verify -> complete; terminates by running the profile's repo-local verifier; write scope gov-infra/** plus committed branch/profile consistency surfaces; MCP is guidance-only and does not replace repo CI"
+    },
+    {
+      "surface": "govern genome index + manifest",
+      "fact": "genome_commit bc41187efb6f5b3c3bfb4d9295836d4e071941d7; per-file sha256 checksums used as the child-side honesty gate; see gov-infra/genome-provenance.json"
+    },
+    {
+      "surface": "scaffold-inventory (software_repo_gov_infra.scaffold_inventory.v1)",
+      "fact": "canonical artifact -> genome-source -> token -> ci-hook map; required protected surface gov-verify-rubric.sh + gov-rubric-report.json + protected-branch CI hook; rubric categories THR/QUA/CON/COM/SEC/CMP/MAI/DOC"
+    },
+    {
+      "surface": "gov_rubric_report.v1 schema descriptor",
+      "fact": "strict JSON schema (additionalProperties:false); results[].id must match ^(QUA|CON|COM|SEC|CMP|MAI|DOC)-[0-9]+$; committed byte-faithful at gov-infra/schemas/gov-rubric-report.schema.json"
+    },
+    {
+      "path": ".claude/skills/apply-and-verify-governance/SKILL.md",
+      "fact": "steward apply/verify cadence: checksum-verify staged genome, run repo-local verifier to fresh gov_rubric_report.v1, confirm branch/profile consistency, record; missing check is BLOCKED, never simulated"
+    },
+    {
+      "path": "sibling gov-infra (lesser-body, lesser-host)",
+      "fact": "same software_repo_gov_infra profile precedent for a lean, repo-appropriate verifier that runs the repo's real CI/build gates and emits gov_rubric_report.v1"
+    },
+    {
+      "surface": "scoped steward memory mem-740af03ee7ebfc6d",
+      "fact": "PR #25 governance gate BLOCKED pending a materialization milestone that stages/checksum-verifies the software_repo_gov_infra genome, commits verifier/CI/report surfaces, and produces fresh PASS gov_rubric_report.v1 at the PR head"
+    }
+  ],
+  "namespace_genome": {
+    "status": "staged_and_verified",
+    "agent_route_govern_tools_available": true,
+    "genome_commit": "bc41187efb6f5b3c3bfb4d9295836d4e071941d7",
+    "provenance_file": "gov-infra/genome-provenance.json",
+    "checksum_verification": "passed (child-side sha256 recomputation vs authoritative govern genome index)"
+  },
+  "authority": {
+    "deploy_authority": false,
+    "merge_authority": false,
+    "branch_delete_authority": false,
+    "cloud_mutation_authority": false,
+    "repository_mutation_authority": false,
+    "signing_authority": false,
+    "signing": "retired/none",
+    "execution_authority": false
+  }
+}
