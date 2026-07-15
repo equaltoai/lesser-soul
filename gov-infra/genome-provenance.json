@@ -1,0 +1,47 @@
+{
+  "schema": "gov_infra_genome_provenance.v1",
+  "materialized_for": "lesser-soul",
+  "profile": "software_repo_gov_infra",
+  "genome_commit": "bc41187efb6f5b3c3bfb4d9295836d4e071941d7",
+  "genome_source": {
+    "namespace": "equaltoai",
+    "lifecycle_pack": "govern",
+    "surface_contract": "theorycloud_lifecycle_mcp_surface.v0.1",
+    "manifest_uri": "theorymcp://namespaces/equaltoai/lifecycle-packs/govern/manifest",
+    "index_uri": "theorymcp://namespaces/equaltoai/lifecycle-packs/govern/genome/index",
+    "profile_resource_uri": "theorymcp://namespaces/equaltoai/governance-profiles/theorycloud_governance_profile.v0.1/profiles/software_repo_gov_infra"
+  },
+  "verification_method": "child-side sha256 recomputation compared to the authoritative govern genome index checksums (the honesty gate; the genome's own pins.json is never trusted)",
+  "verified_sources": [
+    {
+      "path": "templates/schemas/gov-rubric-report.schema.json",
+      "sha256": "sha256:97ab13ba535e070ff27b21aa25a1f13f3326dd3927ba73b75807b5c4d3eef8f5",
+      "size_bytes": 3533,
+      "committed_as": "gov-infra/schemas/gov-rubric-report.schema.json",
+      "verification": "local_sha256_match"
+    },
+    {
+      "path": "templates/gov-pack-json.template.json",
+      "sha256": "sha256:13bbee54b54243042208be8c5e6a537021c19f9cc772338fab0dd1672191cc04",
+      "size_bytes": 1073,
+      "committed_as": null,
+      "verification": "local_sha256_match"
+    },
+    {
+      "path": "templates/gov-verify-rubric.template.sh",
+      "sha256": "sha256:033c696f09af116c763a28ecd671a988f1555cfdffc7c861a411d8075dfc194b",
+      "size_bytes": 46728,
+      "committed_as": null,
+      "verification": "authoritative_genome_index",
+      "note": "Canonical maximal-template verifier inspected. Not committed verbatim: it runs unit/integration/coverage/Go-module/SAST/vuln checks that a thin static-site publisher does not have, so an empty-token fill would emit BLOCKED and a fabricated fill is forbidden. A lean, repo-appropriate verifier (same profile, precedented by lesser-body/lesser-host) is materialized instead and runs lesser-soul's real checks."
+    }
+  ],
+  "authority": {
+    "deploy_authority": false,
+    "merge_authority": false,
+    "branch_delete_authority": false,
+    "cloud_mutation_authority": false,
+    "repository_mutation_authority": false,
+    "signing": "retired/none"
+  }
+}

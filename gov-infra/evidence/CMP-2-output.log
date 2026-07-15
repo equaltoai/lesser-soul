@@ -1,0 +1,9 @@
+$ check_genome_checksum
+
+genome checksum verification PASS
+  genome_commit: bc41187efb6f5b3c3bfb4d9295836d4e071941d7
+  templates/schemas/gov-rubric-report.schema.json
+    committed as gov-infra/schemas/gov-rubric-report.schema.json
+    sha256 sha256:97ab13ba535e070ff27b21aa25a1f13f3326dd3927ba73b75807b5c4d3eef8f5
+    == authoritative govern genome index (honesty gate satisfied)
+  verified_sources recorded: 3
