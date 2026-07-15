@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.lessersoul.ai/contracts/panonomous/soul-document/v1/schema.json",
+  "title": "Panonomous Soul Document v1",
+  "description": "Stable public schema for the draft soul document authored through Panonomous/Ptah surfaces and consumed by AgentSoul-compatible tools.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["agent_id", "body"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "lessersoul.panonomous.soul-document.v1",
+      "description": "Optional explicit schema marker for clients that persist or exchange the document outside the MCP tool envelope."
+    },
+    "agent_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "not": {
+        "pattern": "[|=/]"
+      },
+      "description": "Route-local child-agent selector for AgentSoul authoring. For Ptah-created Lesser actors, also apply the agent naming vocabulary at /contracts/panonomous/agent-naming/v1/vocabulary.json."
+    },
+    "body": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 49152,
+      "x-lessersoul-byteMax": 49152,
+      "description": "Required Markdown-friendly plain text body. It is the canonical first-person steward framing. The normative bound is 49152 UTF-8 bytes; JSON Schema maxLength is advisory for validators that count code points rather than bytes."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "x-lessersoul-byteMax": 2048,
+      "description": "Optional non-blank summary, trimmed by the authoring surface when supplied. The normative bound is 2048 UTF-8 bytes."
+    },
+    "soul_version": {
+      "type": "integer",
+      "minimum": 1,
+      "readOnly": true,
+      "description": "Server-assigned monotonic draft version. Each successful draft upsert increments this value for the selected agent."
+    },
+    "lifecycle_state": {
+      "type": "string",
+      "enum": ["draft"],
+      "readOnly": true,
+      "description": "AgentSoul authoring tools expose draft soul content only. Publishing snapshots is a separate operation and does not change this draft contract."
+    },
+    "updated_by_subject_id": {
+      "type": "string",
+      "minLength": 1,
+      "readOnly": true,
+      "description": "Server-derived authenticated subject that last updated the draft. Clients must not supply or trust this field from user input."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "readOnly": true,
+      "description": "Server timestamp for draft creation."
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "readOnly": true,
+      "description": "Server timestamp for the latest draft write."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "readOnly": true,
+      "description": "Optimistic storage record version. This is distinct from soul_version and is not an author-controlled field."
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "lessersoul.panonomous.soul-document.v1",
+      "agent_id": "ptah-agent",
+      "body": "You are the dedicated steward of the Ptah-created agent. Ground before acting, preserve explicit contracts, and keep implementation authority upstream-owned.",
+      "summary": "Ptah-created steward soul"
+    }
+  ],
+  "x-lessersoul-contract": {
+    "status": "stable-v1",
+    "source_evidence": [
+      "theory-mcp-server internal/mcp/tools/agent_soul_tools.go agent_soul_get/agent_soul_upsert schemas",
+      "theory-mcp-server internal/models/agent_soul.go AgentSoul model",
+      "theory-mcp-server internal/content/soul_service.go SaveDraft/GetDraft versioning semantics"
+    ],
+    "non_goals": [
+      "No runtime API is added by this schema.",
+      "No mutation of /ns/agent-attribution/v1 is implied.",
+      "No machine-readable section list is defined in v1; headings inside body are plain text."
+    ]
+  }
+}

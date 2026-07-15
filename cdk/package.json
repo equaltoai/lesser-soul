@@ -12,7 +12,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "synth": "npm run build:site && cdk synth -c stage=${STAGE:-lab}",
     "deploy": "npm run build:site && cdk deploy --all",
-    "destroy": "cdk destroy --all"
+    "destroy": "cdk destroy --all",
+    "check:contracts": "node scripts/check-panonomous-contracts.mjs"
   },
   "dependencies": {
     "@theory-cloud/facetheory": "https://github.com/theory-cloud/FaceTheory/releases/download/v4.0.1/theory-cloud-facetheory-4.0.1.tgz",

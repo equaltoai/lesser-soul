@@ -14,6 +14,7 @@ This repo now contains:
 - specifications and roadmaps for Lesser Soul and related FEP work
 - CDK deployment for `spec.lessersoul.ai`
 - static namespace assets such as `/ns/agent-attribution/v1`
+- static Panonomous contract assets such as `/contracts/panonomous/soul-document/v1/schema.json`
 - deployed inventory notes for `spec.lessersoul.ai`
 
 Roadmaps and plans:
@@ -21,6 +22,7 @@ Roadmaps and plans:
 - v2 implementation roadmap: `../ROADMAP.md`
 - v3 implementation roadmap (stack-wide): `../ROADMAP-v3.md`
 - issue 3 FEP implementation plan: `../roadmaps/issue-3-fep-agent-attribution.md`
+- Panonomous contract notes: `../docs/panonomous-contract.md`
 
 Deployment:
 

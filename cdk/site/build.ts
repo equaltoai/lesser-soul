@@ -7,8 +7,10 @@ import { buildSsgSite } from '@theory-cloud/facetheory';
 import { faces } from './faces.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(__dirname, '../..');
 const outDir = path.resolve(__dirname, '../dist/site');
 const staticDir = path.resolve(__dirname, './static');
+const contractsDir = path.resolve(repoRoot, 'contracts');
 
 await rm(outDir, { recursive: true, force: true });
 await mkdir(outDir, { recursive: true });
@@ -21,5 +23,6 @@ const result = await buildSsgSite({
 });
 
 await cp(staticDir, outDir, { recursive: true });
+await cp(contractsDir, path.join(outDir, 'contracts'), { recursive: true });
 
 console.log(`SSG build wrote ${result.pages.length} page(s) to ${result.outDir}`);

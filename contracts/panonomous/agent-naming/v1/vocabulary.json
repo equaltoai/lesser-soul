@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.lessersoul.ai/contracts/panonomous/agent-naming/v1/vocabulary.json",
+  "title": "Panonomous Agent Naming Vocabulary v1",
+  "description": "Stable vocabulary for Ptah-created agent identifiers and Lesser agent usernames.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "agent_id": {
+      "$ref": "#/$defs/ptahCreatedAgentName",
+      "description": "Panonomous/Ptah local agent identifier when that identifier is intended to become or address a Lesser local actor username."
+    },
+    "agent_username": {
+      "$ref": "#/$defs/lesserAgentUsername",
+      "description": "Authoritative Lesser local actor username used with Lesser agent APIs such as agent delegation."
+    }
+  },
+  "anyOf": [
+    { "required": ["agent_id"] },
+    { "required": ["agent_username"] }
+  ],
+  "$defs": {
+    "lesserAgentUsername": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 30,
+      "pattern": "^[A-Za-z0-9_-]{1,30}$",
+      "description": "Exact current Lesser username rule from ValidateUsername: 1 through 30 ASCII letters, digits, underscores, or hyphens. No @ prefix, domain, URL, email address, spaces, periods, or slash characters."
+    },
+    "panonomousAgentId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "not": {
+        "pattern": "[|=/]"
+      },
+      "description": "TheoryMCP child-agent route selector shape observed on AgentSoul tools: a bounded route-local token, not a URL, email address, ActivityPub handle, or Lesser Soul registry token."
+    },
+    "ptahCreatedAgentName": {
+      "allOf": [
+        { "$ref": "#/$defs/lesserAgentUsername" }
+      ],
+      "description": "The Project 48 M3 v1 contract narrows Ptah-created agent names to Lesser's username rule so future Ptah agent_create pre-validation and Lesser authoritative validation cite the same rule."
+    }
+  },
+  "x-lessersoul-vocabulary": {
+    "status": "stable-v1",
+    "term_notes": {
+      "agent_id": "Local Panonomous/Ptah child-agent selector. For Ptah-created Lesser actors in v1, it must use the same lexical value and validation profile as agent_username.",
+      "agent_username": "Lesser local actor username, validated by Lesser. This is the field name used by Lesser's current delegate endpoint contract.",
+      "soul_agent_id": "Separate Lesser Soul registry identifier. Do not validate it with username rules."
+    },
+    "source_evidence": [
+      "lesser pkg/common/validation.go UsernamePattern and ValidateUsername",
+      "lesser cmd/api/handlers/agents.go validateAgentDelegationRequest uses ValidateUsernameParamID for agent_username",
+      "lesser docs/contracts/agent-delegate-api.md documents the M2/L2 delegate contract"
+    ],
+    "recommendations": [
+      "Generated names should prefer lowercase ASCII letters, digits, and hyphens for readability, but validators must not reject uppercase while Lesser still accepts it.",
+      "Clients should trim surrounding whitespace before validation and should not case-fold or otherwise rewrite a value after the operator approves it.",
+      "Uniqueness and collision handling remain Lesser-authoritative."
+    ]
+  },
+  "examples": [
+    {
+      "agent_id": "ptah-agent",
+      "agent_username": "ptah-agent"
+    }
+  ]
+}
