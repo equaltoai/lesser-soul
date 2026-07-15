@@ -70,6 +70,16 @@ const shell = (content: string): string => `\
     line-height: 0.95;
   }
 
+  h2 {
+    margin: 2rem 0 0.75rem;
+    font-size: clamp(1.45rem, 3vw, 2rem);
+  }
+
+  h3 {
+    margin: 1.5rem 0 0.5rem;
+    font-size: 1.15rem;
+  }
+
   p,
   li {
     font-size: 1.05rem;
@@ -79,6 +89,34 @@ const shell = (content: string): string => `\
 
   ul {
     padding-left: 1.25rem;
+  }
+
+  table {
+    width: 100%;
+    margin: 1rem 0;
+    border-collapse: collapse;
+    font-size: 0.98rem;
+  }
+
+  th,
+  td {
+    padding: 0.75rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--line);
+  }
+
+  th {
+    color: var(--ink);
+  }
+
+  .notice {
+    margin: 1rem 0;
+    padding: 1rem;
+    border: 1px solid var(--line);
+    border-left: 0.35rem solid var(--accent);
+    border-radius: 0.85rem;
+    background: rgba(255, 255, 255, 0.48);
   }
 
   .links {
@@ -147,6 +185,140 @@ export const faces: FaceModule[] = [
           <a class="card" href="/fep/agent-social-attribution/">
             <strong>FEP workstream</strong>
             <span>Current implementation notes and submission path for agent social attribution.</span>
+          </a>
+          <a class="card" href="/contracts/panonomous/">
+            <strong>Panonomous contracts</strong>
+            <span>Soul-document schema and agent naming vocabulary for Ptah-created agents.</span>
+          </a>
+        </div>
+      `),
+    }),
+  },
+  {
+    route: '/contracts/panonomous',
+    mode: 'ssg',
+    render: () => ({
+      head: {
+        title: 'Panonomous Contracts',
+      },
+      html: shell(`
+        <span class="eyebrow">Panonomous Contract</span>
+        <h1>Ptah writes against a soul-owned public contract.</h1>
+        <p>
+          These versioned static documents define the soul-document shape and naming vocabulary used by
+          Panonomous/Ptah-created agents. They are published as new stable URLs and do not mutate the frozen
+          <code>/ns/agent-attribution/v1</code> namespace.
+        </p>
+        <div class="links">
+          <a class="card" href="/contracts/panonomous/soul-document/">
+            <strong>Soul-document schema</strong>
+            <span>Required body text, optional summary, and server-assigned draft version semantics.</span>
+          </a>
+          <a class="card" href="/contracts/panonomous/agent-naming/">
+            <strong>Agent naming vocabulary</strong>
+            <span>Shared agent_id / agent_username vocabulary aligned with Lesser username validation.</span>
+          </a>
+          <a class="card" href="/">
+            <strong>Back to home</strong>
+            <span>Return to the Lesser Soul landing page.</span>
+          </a>
+        </div>
+      `),
+    }),
+  },
+  {
+    route: '/contracts/panonomous/soul-document',
+    mode: 'ssg',
+    render: () => ({
+      head: {
+        title: 'Panonomous Soul Document',
+      },
+      html: shell(`
+        <span class="eyebrow">Soul Document v1</span>
+        <h1>A draft soul is body, summary, and monotonic version evidence.</h1>
+        <p>
+          The Panonomous soul document is the public contract for the text Ptah authors before a child agent's
+          interface is published. It mirrors the minimal AgentSoul evidence: <code>agent_soul_upsert</code> accepts an
+          <code>agent_id</code>, required <code>body</code>, and optional <code>summary</code>; successful writes create
+          draft-only, versioned records.
+        </p>
+        <div class="notice">
+          <strong>Stable schema URL:</strong>
+          <a href="/contracts/panonomous/soul-document/v1/schema.json"><code>/contracts/panonomous/soul-document/v1/schema.json</code></a>
+        </div>
+        <h2>Normative v1 fields</h2>
+        <table>
+          <thead>
+            <tr><th>Field</th><th>Requirement</th><th>Semantics</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>agent_id</code></td><td>required</td><td>Route-local child-agent selector. Ptah-created Lesser actors must also satisfy the naming vocabulary.</td></tr>
+            <tr><td><code>body</code></td><td>required; non-blank; 49,152 UTF-8 bytes max</td><td>Markdown-friendly first-person steward framing used verbatim as the soul body.</td></tr>
+            <tr><td><code>summary</code></td><td>optional; non-blank when present; 2,048 UTF-8 bytes max</td><td>Short inventory-facing description.</td></tr>
+            <tr><td><code>soul_version</code></td><td>server-assigned</td><td>Positive integer incremented by one for each successful draft upsert.</td></tr>
+            <tr><td><code>lifecycle_state</code></td><td>server-assigned</td><td><code>agent_soul_*</code> tools expose draft content only; publishing is a separate operation.</td></tr>
+          </tbody>
+        </table>
+        <h2>Sectioning</h2>
+        <p>
+          V1 intentionally defines a single plain-text <code>body</code>. Implementations may render Markdown headings
+          for humans, but no machine-readable section list is normative in this contract.
+        </p>
+        <div class="links">
+          <a class="card" href="/contracts/panonomous/soul-document/v1/schema.json">
+            <strong>Open schema JSON</strong>
+            <span>Machine-readable v1 schema for draft soul documents.</span>
+          </a>
+          <a class="card" href="/contracts/panonomous/">
+            <strong>Back to Panonomous contracts</strong>
+            <span>Return to the contract index.</span>
+          </a>
+        </div>
+      `),
+    }),
+  },
+  {
+    route: '/contracts/panonomous/agent-naming',
+    mode: 'ssg',
+    render: () => ({
+      head: {
+        title: 'Panonomous Agent Naming',
+      },
+      html: shell(`
+        <span class="eyebrow">Naming Vocabulary v1</span>
+        <h1>Ptah-created names must line up with Lesser's username rule.</h1>
+        <p>
+          This vocabulary distinguishes the local <code>agent_id</code> selector from the Lesser
+          <code>agent_username</code>. For Project 48 M3 v1, Ptah-created agents that become or address Lesser actors
+          use the same lexical validation profile as Lesser usernames.
+        </p>
+        <div class="notice">
+          <strong>Stable vocabulary URL:</strong>
+          <a href="/contracts/panonomous/agent-naming/v1/vocabulary.json"><code>/contracts/panonomous/agent-naming/v1/vocabulary.json</code></a>
+        </div>
+        <h2>Lesser-aligned rule</h2>
+        <table>
+          <thead>
+            <tr><th>Term</th><th>Rule</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>agent_username</code></td><td><code>^[A-Za-z0-9_-]{1,30}$</code></td><td>Exact current Lesser username rule: ASCII letters, digits, underscore, hyphen; length 1–30.</td></tr>
+            <tr><td><code>agent_id</code></td><td>same rule for Ptah-created Lesser actors</td><td>The local selector must not become a de-facto shape that Lesser later rejects.</td></tr>
+            <tr><td><code>soul_agent_id</code></td><td>not this vocabulary</td><td>Separate Lesser Soul registry identifier; do not validate it as a username.</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Generated names should prefer lowercase letters, digits, and hyphens for readability, but validators must not
+          reject uppercase while Lesser accepts uppercase. Uniqueness and collision handling remain Lesser-authoritative.
+        </p>
+        <div class="links">
+          <a class="card" href="/contracts/panonomous/agent-naming/v1/vocabulary.json">
+            <strong>Open vocabulary JSON</strong>
+            <span>Machine-readable v1 vocabulary and JSON Schema definitions.</span>
+          </a>
+          <a class="card" href="/contracts/panonomous/">
+            <strong>Back to Panonomous contracts</strong>
+            <span>Return to the contract index.</span>
           </a>
         </div>
       `),
