@@ -12,3 +12,8 @@ cdk/node_modules/
 .codex/
 GEMINI.md
 opencode.json
+
+# Local TheoryMCP agent materializations (generated from the EqualToAI namespace)
+# Keep these untracked; re-materialize from the active install manifest.
+.mcp/
+.mcp.json
