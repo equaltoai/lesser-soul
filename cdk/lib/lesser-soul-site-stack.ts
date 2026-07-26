@@ -17,6 +17,7 @@ import {
 } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 
+import { siteContentSecurityPolicy } from '../site/security.js';
 import { normalizeDeployStage, readWebDomainConfig, route53RecordNameForDomain } from './app-theory-deploy-config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -126,6 +127,10 @@ function handler(event) {
     const baseHeadersPolicy = new cloudfront.ResponseHeadersPolicy(this, 'BaseHeadersPolicy', {
       comment: 'Baseline security headers for spec.lessersoul.ai static pages',
       securityHeadersBehavior: {
+        contentSecurityPolicy: {
+          contentSecurityPolicy: siteContentSecurityPolicy,
+          override: true,
+        },
         strictTransportSecurity: {
           accessControlMaxAge: Duration.days(365 * 2),
           includeSubdomains: true,
