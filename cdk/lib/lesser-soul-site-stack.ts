@@ -17,6 +17,8 @@ import {
 } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 
+import { normalizeDeployStage, readWebDomainConfig, route53RecordNameForDomain } from './app-theory-deploy-config.js';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function requireDir(name: string, relativePath: string): string {
@@ -37,22 +39,33 @@ function readOptionalContext(scope: Construct, name: string): string | undefined
   return text.length > 0 ? text : undefined;
 }
 
-function requireContext(scope: Construct, name: string, reason: string): string {
-  const value = readOptionalContext(scope, name);
-  if (!value) {
-    throw new Error(`Missing required context "${name}": ${reason}`);
+function rejectLegacyDeployOverrides(scope: Construct): void {
+  const contextKeys = ['domainName', 'certificateArn', 'hostedZoneName'] as const;
+  const environmentKeys = ['DOMAIN_NAME', 'CERTIFICATE_ARN', 'HOSTED_ZONE_NAME'] as const;
+  const suppliedContext = contextKeys.filter((name) => readOptionalContext(scope, name));
+  const suppliedEnvironment = environmentKeys.filter((name) => String(process.env[name] ?? '').trim().length > 0);
+
+  if (suppliedContext.length === 0 && suppliedEnvironment.length === 0) {
+    return;
   }
-  return value;
+
+  const supplied = [
+    ...suppliedContext.map((name) => `CDK context ${name}`),
+    ...suppliedEnvironment.map((name) => `environment ${name}`),
+  ];
+  throw new Error(
+    `Legacy deploy overrides are disabled (${supplied.join(', ')}); configure live DNS only through app-theory/app.json lesserSoul.webDomain.live`,
+  );
 }
 
 export class LesserSoulSiteStack extends Stack {
   constructor(scope: Construct, id: string, props: StackProps = {}) {
     super(scope, id, props);
 
-    const stage = readOptionalContext(this, 'stage') ?? 'lab';
-    const domainName = readOptionalContext(this, 'domainName') ?? (stage === 'live' ? 'spec.lessersoul.ai' : undefined);
-    const hostedZoneName = readOptionalContext(this, 'hostedZoneName');
-    const certificateArn = readOptionalContext(this, 'certificateArn');
+    const stage = normalizeDeployStage(readOptionalContext(this, 'stage') ?? 'lab');
+    rejectLegacyDeployOverrides(this);
+    const webDomain = readWebDomainConfig(stage);
+    const domainName = webDomain?.domainName;
 
     const siteBucket = new s3.Bucket(this, 'SiteBucket', {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -158,29 +171,20 @@ function handler(event) {
     const siteOrigin = origins.S3BucketOrigin.withOriginAccessControl(siteBucket);
     const namespaceOrigin = origins.S3BucketOrigin.withOriginAccessControl(namespaceBucket);
 
-    let certificate: acm.ICertificate | undefined;
     let hostedZone: route53.IHostedZone | undefined;
+    let certificate: acm.ICertificate | undefined;
 
-    if (domainName) {
-      if (certificateArn) {
-        certificate = acm.Certificate.fromCertificateArn(this, 'SiteCertificate', certificateArn);
-      } else if (hostedZoneName) {
-        hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
-          domainName: hostedZoneName,
-        });
+    if (webDomain) {
+      hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
+        hostedZoneId: webDomain.hostedZoneId,
+        zoneName: webDomain.hostedZoneName,
+      });
 
-        certificate = new acm.Certificate(this, 'SiteCertificate', {
-          domainName,
-          validation: acm.CertificateValidation.fromDns(hostedZone),
-        });
-      } else {
-        const requiredName = requireContext(
-          this,
-          'certificateArn',
-          'provide an ACM certificate ARN for external DNS setups, or pass hostedZoneName to let CDK manage Route 53 and DNS validation',
-        );
-        void requiredName;
-      }
+      certificate = new acm.Certificate(this, 'SiteCertificate', {
+        domainName: webDomain.domainName,
+        validation: acm.CertificateValidation.fromDns(hostedZone),
+        certificateName: `lesser-soul-${stage}-${webDomain.domainName}`,
+      });
     }
 
     const distribution = new cloudfront.Distribution(this, 'Distribution', {
@@ -225,16 +229,18 @@ function handler(event) {
       ],
     });
 
-    if (domainName && hostedZone) {
+    if (webDomain && domainName && hostedZone) {
+      const recordName = route53RecordNameForDomain(domainName, webDomain.hostedZoneName);
+
       new route53.ARecord(this, 'AliasRecordA', {
         zone: hostedZone,
-        recordName: domainName,
+        recordName,
         target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
       });
 
       new route53.AaaaRecord(this, 'AliasRecordAaaa', {
         zone: hostedZone,
-        recordName: domainName,
+        recordName,
         target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
       });
     }

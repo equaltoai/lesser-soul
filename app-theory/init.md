@@ -81,8 +81,8 @@ The goal is to produce a repo that:
 
 3. Implement deploy/destroy entrypoints that match the contract commands:
    - Commands must be stage-aware (a `stage` context or equivalent) and must not silently deploy to the wrong account.
-   - If production DNS is not hosted in Route 53, the deploy flow must support passing an ACM certificate ARN instead of
-     assuming hosted-zone control.
+   - For this repository, live domain, hosted-zone, certificate-validation, and alias-record state is repo-owned under
+     `lesserSoul.webDomain.live` in `app-theory/app.json`; operator-supplied domain or certificate overrides are rejected.
 
 4. Ensure the CDK app uses the same stage naming as the contract:
    - stages: `lab` (default) and `live` (override)
@@ -114,15 +114,13 @@ That contract defines:
 
 - `schema`: contract version
 - `frameworks`: pinned destination details (AppTheory + TableTheory)
+- `lesserSoul.webDomain.live`: the repo-owned `spec.lessersoul.ai` domain and Route 53 hosted-zone identity
 - `cdk.dir`: repo-relative CDK directory
 - `cdk.up`: deploy command (expects AWS profile + stage at runtime)
 - `cdk.down`: destroy command (expects AWS profile + stage at runtime)
 
-Optional runtime environment for domain deployment:
-
-- `DOMAIN_NAME` to override the deployed hostname
-- `CERTIFICATE_ARN` for custom domains when DNS is not hosted in Route 53
-- `HOSTED_ZONE_NAME` only when CDK should manage Route 53 validation and alias records
+Domain deployment has no operator-supplied override variables. `DOMAIN_NAME`, `CERTIFICATE_ARN`, and `HOSTED_ZONE_NAME`
+(and matching CDK context values) are rejected so the committed deployment contract remains the source of truth.
 
 ### Using the contract with `theory app up/down`
 
@@ -136,28 +134,25 @@ Optional runtime environment for domain deployment:
   - `--aws-profile <name>`
   - or `AWS_PROFILE=<name>`
 
-Copy/paste examples:
+Copy/paste examples from the repository root:
 
 ```bash
-# default stage (lab)
-AWS_PROFILE=my-profile theory app up
+# Symbolic preview (no cloud mutation).
+AWS_PROFILE=Lesser theory app up --stage lab
 
-# explicit stage selection
-theory app up --aws-profile my-profile --stage lab
+# Authorized operator execution.
+AWS_PROFILE=Lesser theory app up --stage lab --execute
 
-# live deploy with external DNS and an existing ACM certificate
-CERTIFICATE_ARN=arn:aws:acm:us-east-1:123456789012:certificate/abcd... \
-DOMAIN_NAME=spec.lessersoul.ai \
-theory app up --aws-profile my-profile --stage live
-
-# destroy live stage
-theory app down --aws-profile my-profile --stage live
+# Only after a clean lab verification and soak.
+AWS_PROFILE=Lesser theory app up --stage live
+AWS_PROFILE=Lesser theory app up --stage live --execute
 ```
 
 Notes:
 
-- If your environment does not use named AWS profiles, your local agent can map `--aws-profile` to whatever credentials
-  mechanism is appropriate (SSO, environment variables, etc.), but the contract still expects the profile name to be
-  provided to the CDK command.
+- `theory app up` previews by default; `--execute` is required to mutate cloud state.
+- `AWS_PROFILE=Lesser` is the repository's named deployment profile.
+- Never deploy `live` without a clean `lab` soak, and never set a timeout on CDK deployment.
+- `theory app down` / `cdk destroy` is destructive and requires explicit authorization every time.
 - If the CDK codebase uses a different stage mechanism than `-c stage=...`, update the CDK app and/or the contract so
   they match (do not rely on implicit defaults for `live`).

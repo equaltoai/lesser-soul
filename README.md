@@ -18,6 +18,7 @@ as `lesser-host`.
 ## Repository Layout
 
 - `cdk/`: AWS CDK app for the public site and namespace hosting
+  - operator deployment flow and commands: `cdk/README.md`
 - `docs/`: maintainer docs and deployment notes
 - `roadmaps/`: implementation plans for active work
 - `contracts/`: contract and schema material, including the Panonomous soul-document schema and agent naming vocabulary
