@@ -212,7 +212,7 @@ export const faces: FaceModule[] = [
         <div class="links">
           <a class="card" href="/contracts/panonomous/soul-document/">
             <strong>Soul-document schema</strong>
-            <span>Required body text, optional summary, and server-assigned draft version semantics.</span>
+            <span>Immutable v1 core plus the optional five-body, provenance, and published-lifecycle v2 layer.</span>
           </a>
           <a class="card" href="/contracts/panonomous/agent-naming/">
             <strong>Agent naming vocabulary</strong>
@@ -264,14 +264,104 @@ export const faces: FaceModule[] = [
           V1 intentionally defines a single plain-text <code>body</code>. Implementations may render Markdown headings
           for humans, but no machine-readable section list is normative in this contract.
         </p>
+        <h2>Layered v2</h2>
+        <p>
+          V2 keeps this minimal core while adding optional <code>structure.five_bodies</code> and
+          <code>provenance</code> blocks plus explicit <code>draft</code>, <code>published</code>, and
+          <code>archived</code> lifecycle states. V1 remains byte-identical at its existing URL.
+        </p>
         <div class="links">
           <a class="card" href="/contracts/panonomous/soul-document/v1/schema.json">
             <strong>Open schema JSON</strong>
             <span>Machine-readable v1 schema for draft soul documents.</span>
           </a>
+          <a class="card" href="/contracts/panonomous/soul-document/v2/">
+            <strong>Read the v2 reference</strong>
+            <span>Layered five-body declarations, provenance, lifecycle, examples, and extension rules.</span>
+          </a>
           <a class="card" href="/contracts/panonomous/">
             <strong>Back to Panonomous contracts</strong>
             <span>Return to the contract index.</span>
+          </a>
+        </div>
+      `),
+    }),
+  },
+  {
+    route: '/contracts/panonomous/soul-document/v2',
+    mode: 'ssg',
+    render: () => ({
+      head: {
+        title: 'Panonomous Soul Document v2',
+      },
+      html: shell(`
+        <span class="eyebrow">Soul Document v2</span>
+        <h1>A stable core with optional five-body and provenance overlays.</h1>
+        <p>
+          Soul-document v2 is layered on the immutable v1 core. The canonical Markdown <code>body</code> remains
+          required and authoritative; structured declarations are optional machine-readable overlays. This version
+          also defines the published lifecycle needed by downstream materializers.
+        </p>
+        <div class="notice">
+          <strong>Stable schema URL:</strong>
+          <a href="/contracts/panonomous/soul-document/v2/schema.json"><code>/contracts/panonomous/soul-document/v2/schema.json</code></a>
+        </div>
+        <h2>Core and lifecycle</h2>
+        <table>
+          <thead>
+            <tr><th>Surface</th><th>Requirement</th><th>Semantics</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>agent_id</code> / <code>body</code></td><td>required</td><td>V1-compatible selector and canonical Markdown body, including the same byte bounds.</td></tr>
+            <tr><td><code>summary</code></td><td>optional</td><td>V1-compatible short description.</td></tr>
+            <tr><td><code>lifecycle_state</code></td><td><code>draft</code>, <code>published</code>, or <code>archived</code></td><td>Draft to published is an explicit owner act; published is immutable; archived is not rendered.</td></tr>
+          </tbody>
+        </table>
+        <h2>Five-body declaration</h2>
+        <p>
+          Optional <code>structure.five_bodies</code> carries <code>identity</code>, <code>philosophy</code>,
+          <code>discipline</code>, <code>boundaries</code>, and <code>soul</code>. Every body requires a
+          <code>summary</code> and may include <code>notes</code>. Soul also requires a non-empty
+          <code>refusals</code> list; each refusal is the complete triple <code>bypass</code>,
+          <code>invariant</code>, and <code>closestSafePath</code>.
+        </p>
+        <h2>Mint provenance</h2>
+        <p>
+          Optional <code>provenance</code> is complete when present: declaration schema version, canonical
+          <code>sha256:</code> candidate hash, registration and conversation IDs, model, and a controlled source.
+          Partial provenance and unknown properties are rejected.
+        </p>
+        <h2>Lifecycle and materialization</h2>
+        <div class="notice">
+          Downstream materialization must require <code>lifecycle_state = "published"</code>. Drafts remain mutable
+          authoring state; a published document is an immutable snapshot; archived snapshots retire from rendering.
+          JSON Schema validates the value, while the implementation enforces transition history.
+        </div>
+        <h2>Extension convention</h2>
+        <p>
+          Future machine-readable overlays live under lowercase snake-case <code>structure.*</code> keys. Every new
+          block receives a closed schema at a new soul-document version path. V2 rejects unknown blocks rather than
+          allowing its semantics to drift after publication.
+        </p>
+        <h2>Identifier boundaries</h2>
+        <p>
+          The document's <code>agent_id</code> retains the v1 route-local selector rule. It is not Lesser's
+          username-lexical <code>local_id</code>/<code>agent_username</code> and is not the separate
+          <code>soul_agent_id</code>. Apply the naming vocabulary only when a workflow intentionally maps the same
+          lexical value to a Ptah-created Lesser actor.
+        </p>
+        <div class="links">
+          <a class="card" href="/contracts/panonomous/soul-document/v2/schema.json">
+            <strong>Open schema JSON</strong>
+            <span>JSON Schema 2020-12 for soul-document v2.</span>
+          </a>
+          <a class="card" href="/contracts/panonomous/soul-document/v2/examples/valid-published-five-bodies.json">
+            <strong>Open valid example</strong>
+            <span>A published document with five bodies and complete provenance.</span>
+          </a>
+          <a class="card" href="/contracts/panonomous/soul-document/">
+            <strong>Back to soul-document v1</strong>
+            <span>Review the immutable minimal core and its stable schema URL.</span>
           </a>
         </div>
       `),

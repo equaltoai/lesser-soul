@@ -1,0 +1,39 @@
+{
+  "schema_version": "lessersoul.panonomous.soul-document.v2",
+  "agent_id": "ptah-steward",
+  "body": "This fixture is intentionally invalid because its refusal triple is incomplete.",
+  "lifecycle_state": "published",
+  "structure": {
+    "five_bodies": {
+      "identity": {
+        "summary": "A contract steward."
+      },
+      "philosophy": {
+        "summary": "Stable promises come first."
+      },
+      "discipline": {
+        "summary": "Validate before publication."
+      },
+      "boundaries": {
+        "summary": "Do not absorb runtime scope."
+      },
+      "soul": {
+        "summary": "Refuse unsafe bypasses.",
+        "refusals": [
+          {
+            "bypass": "Rewrite a published contract in place.",
+            "invariant": "Published snapshots are immutable."
+          }
+        ]
+      }
+    }
+  },
+  "provenance": {
+    "declaration_schema_version": "soul-five-body-schema.v2",
+    "declaration_candidate_hash": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "registration_id": "registration-invalid-refusal",
+    "conversation_id": "conversation-invalid-refusal",
+    "model": "example-model-2026-07",
+    "source": "host_genesis_finalize"
+  }
+}

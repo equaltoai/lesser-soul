@@ -1,0 +1,290 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.lessersoul.ai/contracts/panonomous/soul-document/v2/schema.json",
+  "title": "Panonomous Soul Document v2",
+  "description": "Stable public schema that layers optional five-body declarations and mint provenance onto the Panonomous soul-document v1 core.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["agent_id", "body"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "lessersoul.panonomous.soul-document.v2",
+      "description": "Optional explicit schema marker for clients that persist or exchange the document outside the MCP tool envelope."
+    },
+    "agent_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "not": {
+        "pattern": "[|=/]"
+      },
+      "description": "Route-local child-agent selector for AgentSoul authoring. For Ptah-created Lesser actors, also apply the agent naming vocabulary at /contracts/panonomous/agent-naming/v1/vocabulary.json. This document selector is not itself the username-lexical local_id/agent_username and is not the separate Lesser Soul registry soul_agent_id; only workflows intentionally mapping the same lexical value apply the username rule."
+    },
+    "body": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 49152,
+      "x-lessersoul-byteMax": 49152,
+      "description": "Required Markdown-friendly plain text body. It is the canonical first-person steward framing. The normative bound is 49152 UTF-8 bytes; JSON Schema maxLength is advisory for validators that count code points rather than bytes."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "x-lessersoul-byteMax": 2048,
+      "description": "Optional non-blank summary, trimmed by the authoring surface when supplied. The normative bound is 2048 UTF-8 bytes."
+    },
+    "soul_version": {
+      "type": "integer",
+      "minimum": 1,
+      "readOnly": true,
+      "description": "Server-assigned monotonic draft version. Each successful draft upsert increments this value for the selected agent."
+    },
+    "lifecycle_state": {
+      "type": "string",
+      "enum": ["draft", "published", "archived"],
+      "readOnly": true,
+      "description": "Lifecycle state. Transition from draft to published is an explicit owner act; published is an immutable snapshot; archived retires the snapshot from rendering.",
+      "x-lessersoul-lifecycle": {
+        "draft_to_published": "Publication requires an explicit owner act.",
+        "published": "The document is an immutable snapshot and must not be edited in place.",
+        "archived": "The snapshot is retired from rendering without rewriting its published content."
+      }
+    },
+    "updated_by_subject_id": {
+      "type": "string",
+      "minLength": 1,
+      "readOnly": true,
+      "description": "Server-derived authenticated subject that last updated the draft. Clients must not supply or trust this field from user input."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "readOnly": true,
+      "description": "Server timestamp for draft creation."
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "readOnly": true,
+      "description": "Server timestamp for the latest draft write."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "readOnly": true,
+      "description": "Optimistic storage record version. This is distinct from soul_version and is not an author-controlled field."
+    },
+    "structure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["five_bodies"],
+      "description": "Optional machine-readable overlays on the canonical body. V2 recognizes only structure.five_bodies; unknown structure blocks are invalid under this frozen version.",
+      "properties": {
+        "five_bodies": {
+          "$ref": "#/$defs/fiveBodies"
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "declaration_schema_version",
+        "declaration_candidate_hash",
+        "registration_id",
+        "conversation_id",
+        "model",
+        "source"
+      ],
+      "description": "Optional mint provenance. When present, the complete block identifies the declaration contract, canonical candidate, registration flow, conversation, model, and source that produced the structured declaration.",
+      "properties": {
+        "declaration_schema_version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Version marker of the declaration schema used before materialization, for example soul-five-body-schema.v2."
+        },
+        "declaration_candidate_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "Lowercase hexadecimal SHA-256 digest of the canonical declaration candidate, prefixed with sha256:."
+        },
+        "registration_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Identifier of the registration or genesis flow that finalized the declaration."
+        },
+        "conversation_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Identifier of the conversation that supplied the declaration evidence."
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Model identifier recorded by the declaration producer."
+        },
+        "source": {
+          "type": "string",
+          "enum": ["host_genesis_finalize", "ptah_seed", "owner"],
+          "description": "Authoritative production path for this provenance record."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "declarationSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary"],
+      "properties": {
+        "summary": {
+          "type": "string",
+          "description": "Required declaration summary for this body."
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional ordered declaration notes."
+        }
+      }
+    },
+    "refusal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bypass", "invariant", "closestSafePath"],
+      "properties": {
+        "bypass": {
+          "type": "string",
+          "description": "The unsafe bypass or shortcut the soul refuses."
+        },
+        "invariant": {
+          "type": "string",
+          "description": "The invariant protected by the refusal."
+        },
+        "closestSafePath": {
+          "type": "string",
+          "description": "The nearest allowed path that preserves the invariant."
+        }
+      }
+    },
+    "soulDeclarationSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "refusals"],
+      "properties": {
+        "summary": {
+          "type": "string",
+          "description": "Required declaration summary for the soul body."
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional ordered declaration notes."
+        },
+        "refusals": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/refusal"
+          },
+          "description": "Required non-empty refusal set."
+        }
+      }
+    },
+    "fiveBodies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity", "philosophy", "discipline", "boundaries", "soul"],
+      "properties": {
+        "identity": {
+          "$ref": "#/$defs/declarationSection"
+        },
+        "philosophy": {
+          "$ref": "#/$defs/declarationSection"
+        },
+        "discipline": {
+          "$ref": "#/$defs/declarationSection"
+        },
+        "boundaries": {
+          "$ref": "#/$defs/declarationSection"
+        },
+        "soul": {
+          "$ref": "#/$defs/soulDeclarationSection"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "lessersoul.panonomous.soul-document.v2",
+      "agent_id": "ptah-agent",
+      "body": "You are the dedicated steward of the Ptah-created agent. Ground before acting, preserve explicit contracts, and keep implementation authority upstream-owned.",
+      "summary": "Ptah-created steward soul",
+      "lifecycle_state": "published",
+      "structure": {
+        "five_bodies": {
+          "identity": {
+            "summary": "A dedicated public-contract steward."
+          },
+          "philosophy": {
+            "summary": "Prefer stable contracts to local convenience."
+          },
+          "discipline": {
+            "summary": "Ground, act, record, and re-ground."
+          },
+          "boundaries": {
+            "summary": "Keep implementation authority upstream-owned."
+          },
+          "soul": {
+            "summary": "Protect permanent public promises.",
+            "refusals": [
+              {
+                "bypass": "Rewrite a published contract in place.",
+                "invariant": "Published snapshots are immutable.",
+                "closestSafePath": "Publish a new version path."
+              }
+            ]
+          }
+        }
+      },
+      "provenance": {
+        "declaration_schema_version": "soul-five-body-schema.v2",
+        "declaration_candidate_hash": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "registration_id": "reg-example-01",
+        "conversation_id": "conversation-example-01",
+        "model": "example-model",
+        "source": "host_genesis_finalize"
+      }
+    }
+  ],
+  "x-lessersoul-contract": {
+    "status": "stable-v2",
+    "lineage": "Project 48 M3 issues #16 and #17 established v1; issue #28 adds this layered v2 without changing v1.",
+    "extension_convention": {
+      "container": "structure",
+      "block_names": "lowercase snake_case",
+      "rule": "Each future structure.<block_name> must be explicitly declared with a closed schema at a new soul-document version path. Unknown blocks remain invalid under v2 because additionalProperties is false.",
+      "compatibility": "The canonical body remains authoritative; machine-readable structure blocks are optional overlays and must not silently replace body semantics."
+    },
+    "materialization": {
+      "lifecycle_gate": "Only lifecycle_state=published is eligible for rendering or materialization.",
+      "declaration_application": "Deterministic Ptah-side transformation belongs in lesser-body and is not implemented by this static schema publisher."
+    },
+    "source_evidence": [
+      "contracts/panonomous/soul-document/v1/schema.json",
+      "contracts/panonomous/agent-naming/v1/vocabulary.json",
+      "equaltoai/lesser-soul issue #28 operator-settled design (2026-07-26)"
+    ],
+    "non_goals": [
+      "No mutation of soul-document/v1 or /ns/agent-attribution/v1 is implied.",
+      "No runtime API, declaration transformer, or materialization service is added by this schema.",
+      "No machine-readable structure is mandatory for otherwise valid v2 core documents."
+    ]
+  }
+}
