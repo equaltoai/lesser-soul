@@ -1,0 +1,40 @@
+{
+  "schema_version": "lessersoul.panonomous.soul-document.v2",
+  "agent_id": "ptah-steward",
+  "body": "This fixture is intentionally invalid because its provenance hash is not canonical.",
+  "lifecycle_state": "published",
+  "structure": {
+    "five_bodies": {
+      "identity": {
+        "summary": "A contract steward."
+      },
+      "philosophy": {
+        "summary": "Stable promises come first."
+      },
+      "discipline": {
+        "summary": "Validate before publication."
+      },
+      "boundaries": {
+        "summary": "Do not absorb runtime scope."
+      },
+      "soul": {
+        "summary": "Refuse unsafe bypasses.",
+        "refusals": [
+          {
+            "bypass": "Rewrite a published contract in place.",
+            "invariant": "Published snapshots are immutable.",
+            "closestSafePath": "Publish a new version path."
+          }
+        ]
+      }
+    }
+  },
+  "provenance": {
+    "declaration_schema_version": "soul-five-body-schema.v2",
+    "declaration_candidate_hash": "sha256:NOT-A-LOWERCASE-64-HEX-DIGEST",
+    "registration_id": "registration-invalid-hash",
+    "conversation_id": "conversation-invalid-hash",
+    "model": "example-model-2026-07",
+    "source": "host_genesis_finalize"
+  }
+}
