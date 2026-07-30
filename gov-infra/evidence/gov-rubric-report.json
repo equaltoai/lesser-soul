@@ -1,10 +1,10 @@
 {
   "$schema": "https://gov.pai.dev/schemas/gov-rubric-report.schema.json",
   "schemaVersion": 1,
-  "timestamp": "2026-07-15T18:14:29Z",
+  "timestamp": "2026-07-30T15:08:48Z",
   "pack": {
     "version": "2026.07.15-project48-m3-gov-rubric-materialization",
-    "digest": "sha256:976060a66be8834d8ee9ceedbc7833b39a5557965a89145cafabddb5e3f20188"
+    "digest": "sha256:845e0411ab413a1b96215873f9b5a40baf5f07f380464959c2935c1f25d0224b"
   },
   "project": {
     "name": "lesser-soul",

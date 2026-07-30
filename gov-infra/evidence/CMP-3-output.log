@@ -1,11 +1,11 @@
 $ check_head_ref_attestation
 
 head/ref attestation (commit the verifier ran against):
-  git.head=5fb9825946e75ae447a077b7e476d2f59e77ba99
-  git.ref=project48-m3-gov-rubric-materialization
-  git.head_tree=b1793395675b17f346fae68abd0c93d02c713674
-  merge_base_origin_main=d00f0d5a714c92aafbf694b4b1bbacd9ad1b9a52
-  working_tree_changed_paths_after_run=12
+  git.head=1fb4f34a151664580674af95e8689f47b5c5a7f8
+  git.ref=theorymcp/equaltoai/soul/dependency-alert-sweep-20260730
+  git.head_tree=ecba2afe2ebde0a4583115054f9093bff2dd3018
+  merge_base_origin_main=6208233603d8a837f384875f3bc37690bd8fbd99
+  working_tree_changed_paths_after_run=14
 
   Attestation semantics: git.head is the commit checked out when this report
   was generated. The PR head that commits the evidence is an ancestor-or-equal

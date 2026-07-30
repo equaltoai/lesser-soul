@@ -4,4 +4,4 @@ $ (cd cdk && npm run build:site)
 > build:site
 > tsx site/build.ts
 
-SSG build wrote 3 page(s) to /home/aron/ai-workspace/codebases/equaltoai/factory/products/lesser-soul/cdk/dist/site
+SSG build wrote 7 page(s) to /home/aron/ai-workspace/codebases/equaltoai/factory/products/lesser-soul/cdk/dist/site

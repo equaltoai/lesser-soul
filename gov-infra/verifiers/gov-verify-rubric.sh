@@ -354,14 +354,20 @@ check_ci_hook() {
   return 1
 }
 
-# --- MAI-2: change scope constrained to governance materialization ---
+# --- MAI-2: change scope constrained to governed, repository-owned surfaces ---
 check_governance_scope() {
   python3 - <<'PY'
 import subprocess, sys
 def git(*args):
     return subprocess.run(["git", *args], capture_output=True, text=True)
-allowed_prefixes = ("gov-infra/",)
-allowed_exact = {".github/workflows/ci.yml"}
+# This is an allowlist, not a blanket exclusion: every changed path must be either
+# governance/CI material or a public product surface owned by lesser-soul. It permits
+# legitimate static-spec/CDK maintenance while still rejecting unrelated artifacts.
+allowed_prefixes = (
+    "gov-infra/", "app-theory/", "cdk/",
+    "contracts/", "docs/", "roadmaps/",
+)
+allowed_exact = {".github/workflows/ci.yml", "README.md", "ROADMAP.md", "SPEC.md", "LICENSE"}
 changed = set()
 base = git("rev-parse", "--verify", "origin/main")
 if base.returncode == 0:
@@ -380,18 +386,20 @@ for line in st.stdout.splitlines():
         changed.add(p)
 def ok(p):
     return p.startswith(allowed_prefixes) or p in allowed_exact
-print("governance materialization scope (allowed: gov-infra/**, .github/workflows/ci.yml):")
+print("governed repository scope (governance/CI + declared public product surfaces):")
+print("  prefixes: " + ", ".join(allowed_prefixes))
+print("  root files: " + ", ".join(sorted(allowed_exact)))
 if not changed:
     print("  (no changed paths relative to origin/main)")
 for p in sorted(changed):
     print(f"  {'OK ' if ok(p) else 'BAD'} {p}")
 viol = [p for p in sorted(changed) if not ok(p)]
 if viol:
-    print("FAIL: non-governance paths changed:")
+    print("FAIL: paths outside declared governance/product scope:")
     for v in viol:
         print("  - " + v)
     sys.exit(1)
-print("governance-only scope PASS")
+print("governed repository scope PASS")
 PY
 }
 

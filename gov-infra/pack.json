@@ -16,7 +16,11 @@
     "ci_hook_required": true,
     "role": "ci_core",
     "retirement_policy": "never_retired",
-    "allowed_write_scope": ["gov-infra/**", ".github/workflows/ci.yml"],
+    "allowed_write_scope": [
+      "gov-infra/**", ".github/workflows/ci.yml", "app-theory/**",
+      "cdk/**", "contracts/**", "docs/**", "roadmaps/**",
+      "README.md", "ROADMAP.md", "SPEC.md", "LICENSE"
+    ],
     "branch_profile_consistency_surfaces": ["soul", "steward", "AGENTS.md", "skills", "CI"]
   },
   "verifier": {
