@@ -39,7 +39,7 @@ recorded `BLOCKED`, never "fixed" by weakening a gate.
 | CMP-2 | Compliance | genome checksum verification (child-side sha256 vs authoritative govern genome index) |
 | CMP-3 | Compliance | exact head/ref attestation for the commit under decision |
 | MAI-1 | Maintainability | CI hook: `.github/workflows/ci.yml` invokes the verifier |
-| MAI-2 | Maintainability | change scope constrained to `gov-infra/**` + `.github/workflows/ci.yml` |
+| MAI-2 | Maintainability | changed paths must be in the declared governance/CI or lesser-soul public-product allowlist; unknown paths fail |
 | DOC-1 | Docs | this `gov-infra/README.md` is present |
 
 ## Namespace-genome provenance
@@ -60,6 +60,21 @@ for the sibling `software_repo_gov_infra` stewards (`lesser-body`, `lesser-host`
 genome artifact committed byte-for-byte is the report schema at
 `gov-infra/schemas/gov-rubric-report.schema.json` (sha256 `97ab13ba…`, byte-verified),
 against which the emitted report validates.
+
+## MAI-2 repository scope
+
+MAI-2 is a fail-closed repository-surface allowlist, not a governance-only lock. It permits
+`gov-infra/**`, the CI hook `.github/workflows/ci.yml`, and the public product surfaces this
+thin publisher actually owns: `app-theory/**`, `cdk/**` (including its dependency manifests),
+`contracts/**`, `docs/**`, `roadmaps/**`, and root public documents
+`README.md`, `ROADMAP.md`, `SPEC.md`, and `LICENSE`. Any path outside that declared set fails
+MAI-2. This preserves the gate's ability to catch unrelated additions while not rejecting
+legitimate static-spec, documentation, CDK, or dependency remediation.
+
+CMP-2 remains independent of that local allowlist: it recomputes the committed report-schema
+SHA-256 and compares it with the namespace-govern genome index value recorded in
+`genome-provenance.json`. The repo-local lean verifier is intentionally documented as a local
+materialization; editing it does not alter the byte-verified genome schema or its provenance.
 
 ## Authority (denied)
 
