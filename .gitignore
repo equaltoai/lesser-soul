@@ -10,6 +10,8 @@ cdk/node_modules/
 .claude/
 .codex/
 .codex/
+.kimi-code/
+.theorymcp/
 GEMINI.md
 opencode.json
 
