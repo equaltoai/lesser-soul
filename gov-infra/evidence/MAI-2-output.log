@@ -2,7 +2,8 @@ $ check_governance_scope
 
 governed repository scope (governance/CI + declared public product surfaces):
   prefixes: gov-infra/, app-theory/, cdk/, contracts/, docs/, roadmaps/
-  root files: .github/workflows/ci.yml, LICENSE, README.md, ROADMAP.md, SPEC.md
+  root files: .github/workflows/ci.yml, .gitignore, LICENSE, README.md, ROADMAP.md, SPEC.md
+  OK  .gitignore
   OK  cdk/package-lock.json
   OK  cdk/package.json
   OK  gov-infra/README.md
