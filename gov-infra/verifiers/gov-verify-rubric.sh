@@ -367,7 +367,9 @@ allowed_prefixes = (
     "gov-infra/", "app-theory/", "cdk/",
     "contracts/", "docs/", "roadmaps/",
 )
-allowed_exact = {".github/workflows/ci.yml", "README.md", "ROADMAP.md", "SPEC.md", "LICENSE"}
+# 2026-08-01 fleet materialization convention: materialized agent roots stay untracked,
+# so their repository-owned ignore declarations are part of the governed scope.
+allowed_exact = {".gitignore", ".github/workflows/ci.yml", "README.md", "ROADMAP.md", "SPEC.md", "LICENSE"}
 changed = set()
 base = git("rev-parse", "--verify", "origin/main")
 if base.returncode == 0:
