@@ -2,8 +2,8 @@ $ check_toolchain_pins
 
 toolchain pins:
   engines.node = >=24
-  aws-cdk-lib = 2.262.2
-  aws-cdk = 2.1130.0
+  aws-cdk-lib = 2.266.0
+  aws-cdk = 2.1138.0
   constructs = 10.6.0
-  @theory-cloud/facetheory = https://github.com/theory-cloud/FaceTheory/releases/download/v4.0.1/theory-cloud-facetheory-4.0.1.tgz
+  @theory-cloud/facetheory = https://github.com/theory-cloud/FaceTheory/releases/download/v4.0.7/theory-cloud-facetheory-4.0.7.tgz
 all required toolchain pins present and exact
