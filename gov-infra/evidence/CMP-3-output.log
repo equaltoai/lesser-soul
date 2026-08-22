@@ -1,9 +1,9 @@
 $ check_head_ref_attestation
 
 head/ref attestation (commit the verifier ran against):
-  git.head=1801d0ea3a7c81f5bf0a6d91708eb988792ac3c3
-  git.ref=theorymcp/equaltoai/soul/gov-ma2-gitignore-scope
-  git.head_tree=f8eb74679fc12d7ec0d0b9d17313a0ac25ae7384
+  git.head=b8df70d0148de746a44d40aedb3dd2ac5c291dbe
+  git.ref=issue/39-framework-cdk-alignment
+  git.head_tree=d26331161819d4d04123f3cb69b1a1b3e68baab4
   merge_base_origin_main=6208233603d8a837f384875f3bc37690bd8fbd99
   working_tree_changed_paths_after_run=7
 
