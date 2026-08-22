@@ -8,7 +8,6 @@
   },
   "scripts": {
     "build:site": "tsx site/build.ts",
-    "refresh:aws-cdk-lib-patch": "bash ./scripts/build-patched-aws-cdk-lib.sh",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "synth": "npm run build:site && cdk synth -c stage=${STAGE:-lab}",
     "deploy": "npm run build:site && cdk deploy --all",
