@@ -185,7 +185,7 @@ def exact(name):
 for n in ("aws-cdk-lib", "aws-cdk", "constructs"):
     exact(n)
 ft = deps.get("@theory-cloud/facetheory", "")
-if "facetheory" not in ft or "v4.0.7" not in ft:
+if "facetheory" not in ft or "v4.0.8" not in ft:
     errs.append(f"facetheory pin drift: {ft!r}")
 print("toolchain pins:")
 print(f"  engines.node = {eng}")
