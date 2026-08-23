@@ -5,5 +5,5 @@ toolchain pins:
   aws-cdk-lib = 2.266.0
   aws-cdk = 2.1138.0
   constructs = 10.6.0
-  @theory-cloud/facetheory = https://github.com/theory-cloud/FaceTheory/releases/download/v4.0.7/theory-cloud-facetheory-4.0.7.tgz
+  @theory-cloud/facetheory = https://github.com/theory-cloud/FaceTheory/releases/download/v4.0.8/theory-cloud-facetheory-4.0.8.tgz
 all required toolchain pins present and exact

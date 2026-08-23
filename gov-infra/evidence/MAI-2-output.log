@@ -6,6 +6,9 @@ governed repository scope (governance/CI + declared public product surfaces):
   OK  .gitignore
   OK  cdk/package-lock.json
   OK  cdk/package.json
+  OK  cdk/scripts/build-patched-aws-cdk-lib.sh
+  OK  cdk/vendor/README.md
+  OK  cdk/vendor/aws-cdk-lib-2.245.0-brace-expansion-5.0.5.tgz
   OK  gov-infra/README.md
   OK  gov-infra/evidence/.gov-rubric-results.jsonl
   OK  gov-infra/evidence/CMP-3-output.log
